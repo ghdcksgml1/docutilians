@@ -7,5 +7,8 @@ echo "🔨 Building Fat JAR..."
 echo "📦 Preparing NPM package..."
 cp build/libs/docutilians.jar npm-package/lib/
 
+echo "📝 Copy README.md file..."
+cp README.md npm-package/README.md
+
 echo "✅ Done! Ready to publish."
 echo "   cd npm-package && npm publish"
