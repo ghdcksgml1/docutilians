@@ -1,0 +1,31 @@
+{
+  "name": "docutilians",
+  "version": "1.0.0",
+  "description": "Auto-generate OpenAPI specs from source code using LLM",
+  "bin": {
+    "docutilians": "./bin/docutilians.js"
+  },
+  "files": [
+    "bin",
+    "lib"
+  ],
+  "scripts": {
+    "postinstall": "node bin/check-java.js"
+  },
+  "keywords": [
+    "openapi",
+    "swagger",
+    "codegen",
+    "llm",
+    "cli"
+  ],
+  "author": "ghdcksgml1",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ghdcksgml1/docutilians"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
