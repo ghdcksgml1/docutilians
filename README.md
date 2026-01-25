@@ -46,10 +46,13 @@ npm install -g docutilians
 
 ```bash
 # Generate OpenAPI spec from your project
-docutilians ./my-project
+docutilians ./target-project
 
 # Custom output directory
-docutilians ./my-project -o ./docs/openapi
+docutilians ./target-project -o ./docs/openapi
+
+# Anthropic Key
+docutilians -k your-api-key
 ```
 
 ### Environment Setup
