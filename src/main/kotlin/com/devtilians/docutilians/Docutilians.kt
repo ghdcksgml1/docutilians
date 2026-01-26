@@ -1,5 +1,6 @@
 package com.devtilians.docutilians
 
+import ScalarHtmlGenerator
 import com.anthropic.models.messages.Model
 import com.devtilians.docutilians.cli.components.animation.ProgressAnimation
 import com.devtilians.docutilians.cli.components.panel.*
@@ -20,7 +21,6 @@ import com.devtilians.docutilians.scanner.CodeScanner
 import com.devtilians.docutilians.scanner.CodeScanner.ScanResult
 import com.devtilians.docutilians.utils.FileUtils
 import com.devtilians.docutilians.utils.OpenApiMerger
-import com.devtilians.docutilians.utils.ScalarHtmlGenerator
 import com.devtilians.docutilians.utils.retry
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.CliktError
@@ -37,7 +37,10 @@ import com.github.ajalt.mordant.terminal.Terminal
 import com.google.common.base.CaseFormat
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.pathString
 
 class Docutilians : CliktCommand() {
     val claudeApiKey: String by
@@ -123,7 +126,7 @@ class Docutilians : CliktCommand() {
         FileUtils.writeFile(config.getMergeYamlOutputFilePath(), mergedYaml)
         FileUtils.writeFile(
             config.getScalarHtmlFilePath(),
-            ScalarHtmlGenerator.generateHtmlContent(config.getMergeYamlOutputFilePath().name),
+            ScalarHtmlGenerator.generateHtmlContent(mergedYaml),
         )
 
         val (successCount, failCount) = progress.getResult()
