@@ -250,9 +250,14 @@ class Docutilians : CliktCommand() {
 
                     val fileName = file.fileName.toString()
                     progress.clearLogs()
-                    progress.updateStatus("Collecting relevant files...", fileName)
 
-                    retry(retryOn = { it is OpenApiYamlParsedException }) {
+                    retry(retryOn = { it is OpenApiYamlParsedException }) { attempt ->
+                        if (attempt > 0)
+                            progress.updateStatus(
+                                "[Retry: $attempt] Collecting relevant files...",
+                                fileName,
+                            )
+                        else progress.updateStatus("Collecting relevant files...", fileName)
                         val fileCollectPrompt =
                             FileCollectPromptBuilder(
                                     fileInfo =

@@ -8,13 +8,13 @@ suspend fun <T> retry(
     times: Int = 3,
     delay: Duration = 1.seconds,
     retryOn: (Exception) -> Boolean = { true },
-    block: suspend () -> T,
+    block: suspend (attempt: Int) -> T,
 ): T {
     var lastException: Exception? = null
 
     repeat(times) { attempt ->
         try {
-            return block()
+            return block(attempt)
         } catch (e: Exception) {
             lastException = e
             if (!retryOn(e)) {
