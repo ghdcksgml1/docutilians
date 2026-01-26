@@ -13,7 +13,6 @@ object OpenApiUtils {
         if (result.messages.isEmpty()) {
             return true
         } else {
-            result.messages.forEach { println("  - $it") }
             return false
         }
     }
