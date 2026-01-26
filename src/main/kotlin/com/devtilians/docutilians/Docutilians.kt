@@ -8,6 +8,8 @@ import com.devtilians.docutilians.cli.components.text.Banner
 import com.devtilians.docutilians.common.Config
 import com.devtilians.docutilians.constants.Colors
 import com.devtilians.docutilians.constants.Language
+import com.devtilians.docutilians.exceptions.ApiKeyNotFoundError
+import com.devtilians.docutilians.exceptions.InvalidModelError
 import com.devtilians.docutilians.exceptions.OpenApiYamlParsedException
 import com.devtilians.docutilians.llm.AnthropicClient
 import com.devtilians.docutilians.llm.LlmClient
@@ -21,12 +23,15 @@ import com.devtilians.docutilians.utils.OpenApiMerger
 import com.devtilians.docutilians.utils.ScalarHtmlGenerator
 import com.devtilians.docutilians.utils.retry
 import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.core.main
+import com.github.ajalt.clikt.core.CliktError
+import com.github.ajalt.clikt.core.UsageError
+import com.github.ajalt.clikt.core.parse
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
+import com.github.ajalt.mordant.platform.MultiplatformSystem.exitProcess
 import com.github.ajalt.mordant.rendering.AnsiLevel
 import com.github.ajalt.mordant.terminal.Terminal
 import com.google.common.base.CaseFormat
@@ -75,20 +80,21 @@ class Docutilians : CliktCommand() {
     fun initialize(t: Terminal) {
         printGreeting(t)
 
-        Model.of(claudeApiModel).validate()
+        runCatching { Model.of(claudeApiModel).validate() }
+            .onFailure { throw InvalidModelError(claudeApiModel) }
 
         llm =
-            if (claudeApiKey.isNotBlank())
-                AnthropicClient(apiKey = claudeApiKey, model = Model.of(claudeApiModel))
-            else AnthropicClient(model = Model.of(claudeApiModel))
+            when {
+                claudeApiKey.isNotBlank() ->
+                    AnthropicClient(apiKey = claudeApiKey, model = Model.of(claudeApiModel))
+                System.getenv("ANTHROPIC_API_KEY") != null ->
+                    AnthropicClient(model = Model.of(claudeApiModel))
+                else -> throw ApiKeyNotFoundError()
+            }
 
         val projectDirPath = determineProjectDir(t, projectDir)
         val languageEnum =
-            try {
-                Language.valueOf(language.uppercase())
-            } catch (e: IllegalArgumentException) {
-                Language.EN
-            }
+            runCatching { Language.valueOf(language.uppercase()) }.getOrDefault(Language.EN)
 
         config =
             Config(
@@ -100,8 +106,14 @@ class Docutilians : CliktCommand() {
 
     override fun run() = runBlocking {
         val t = Terminal(ansiLevel = AnsiLevel.TRUECOLOR, interactive = true)
-        initialize(t)
 
+        runCatching { initialize(t) }
+            .onFailure { e ->
+                when (e) {
+                    is CliktError -> throw e
+                    else -> throw UsageError("Initialization failed: ${e.message}")
+                }
+            }
         val scanResult = scanProjectTargetDir(t, config.projectDirPath)
 
         val (generatedYamls, progress) = generateFileToOpenApiYaml(t, scanResult)
@@ -296,4 +308,15 @@ class Docutilians : CliktCommand() {
     }
 }
 
-fun main(args: Array<String>) = Docutilians().main(args)
+fun main(args: Array<String>) {
+    val command = Docutilians()
+    try {
+        command.parse(args)
+    } catch (e: CliktError) {
+        command.echoFormattedHelp(e)
+        exitProcess(e.statusCode)
+    } catch (e: Exception) {
+        Terminal().println(Colors.error("Unexpected error: ${e.message}"))
+        exitProcess(1)
+    }
+}
