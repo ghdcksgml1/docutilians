@@ -16,6 +16,8 @@
     <strong>🚀 Multi-Agent Pipeline • 📝 Language Agnostic • ⚡ Recursive Type Analysis</strong>
 </p>
 
+---
+
 > **✨ Say goodbye to manual API documentation!** Docutilians uses LLM-powered multi-agent architecture to automatically
 > generate accurate OpenAPI specs from your source code.
 

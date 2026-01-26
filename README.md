@@ -16,8 +16,6 @@
     <strong>🚀 Multi-Agent Pipeline • 📝 Language Agnostic • ⚡ Recursive Type Analysis</strong>
 </p>
 
-코드와 비교해서 README를 수정했습니다:
-
 ---
 
 > **✨ Say goodbye to manual API documentation!** Docutilians uses LLM-powered multi-agent architecture to automatically
