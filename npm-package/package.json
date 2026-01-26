@@ -1,6 +1,6 @@
 {
   "name": "docutilians",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Auto-generate OpenAPI specs from source code using LLM",
   "bin": {
     "docutilians": "./bin/docutilians.js"
