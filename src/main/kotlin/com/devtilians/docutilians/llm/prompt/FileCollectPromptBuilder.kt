@@ -1,22 +1,134 @@
 package com.devtilians.docutilians.llm.prompt
 
-class FileCollectPromptBuilder(private val fileInfo: PromptBuilder.RouterFileInfo) : PromptBuilder {
+import com.devtilians.docutilians.constants.Language
+
+class FileCollectPromptBuilder(
+    private val fileInfo: PromptBuilder.RouterFileInfo,
+    private val language: Language = Language.EN,
+) : PromptBuilder {
 
     override fun build(): PromptBuilder.Prompt {
+        val systemPrompt =
+            when (language) {
+                Language.EN -> FILE_COLLECT_EN_SYSTEM_PROMPT
+                Language.KO -> FILE_COLLECT_KO_SYSTEM_PROMPT
+            }
         val userPrompt =
-            """
-            ## 분석할 컨트롤러
-                        
-            파일 절대경로: ${this.fileInfo.absolutePath}
-            소스코드:
-            ${this.fileInfo.sourceCode}
-            """
-                .trimIndent()
-        return PromptBuilder.Prompt(FILE_COLLECT_SYSTEM_PROMPT, userPrompt)
+            when (language) {
+                Language.EN ->
+                    """
+                    ## Controller to analyze
+                                
+                    absolute file path: ${this.fileInfo.absolutePath}
+                    source code:
+                    ${this.fileInfo.sourceCode}
+                    """
+                        .trimIndent()
+                Language.KO ->
+                    """
+                    ## 분석할 컨트롤러
+                                
+                    파일 절대경로: ${this.fileInfo.absolutePath}
+                    소스코드:
+                    ${this.fileInfo.sourceCode}
+                    """
+                        .trimIndent()
+            }
+
+        return PromptBuilder.Prompt(systemPrompt, userPrompt)
     }
 }
 
-private val FILE_COLLECT_SYSTEM_PROMPT =
+private val FILE_COLLECT_EN_SYSTEM_PROMPT =
+    """
+    # File Collector
+
+    Collects source code of all types referenced in the controller.
+
+    ## Collection Targets
+
+    - Request/Response DTOs
+    - Enums
+    - Entities
+    - Nested types (DTOs within DTOs)
+    - Generic type parameters (e.g., OrderItem in List<OrderItem>)
+    - Inherited parent classes
+
+    ## Exclusion Targets
+
+    - Primitive types: String, Int, Long, Boolean, Double, Float
+    - Time types: LocalDateTime, LocalDate, Instant, ZonedDateTime
+    - Collections themselves: List, Set, Map (however, generic parameters are collected)
+    - External library types (e.g., Spring, Hibernate, Jackson, etc.)
+    - Types belonging to packages outside the user package (e.g., java.*, kotlin.*, org.springframework.*, etc.)
+
+    ## Rules
+
+    1. Call `get_file` for all custom types used in the controller
+    2. If another custom type exists within the retrieved file, recursively call `get_file`
+    3. Repeat until there are no more types to retrieve
+    4. Do not retrieve types that have already been retrieved
+
+    ## Example
+
+    **Controller:**
+
+    @RestController
+    @RequestMapping("/api/orders")
+    class OrderController(
+        private val orderService: OrderService
+    ) {
+        @GetMapping
+        fun listOrders(
+            @RequestParam status: OrderStatus?,
+            @RequestParam(defaultValue = "0") page: Int
+        ): CommonResponse<List<OrderSummary>> {
+            return orderService.listOrders(status, page)
+        }
+        
+        @PostMapping
+        fun createOrder(
+            @RequestBody request: CreateOrderRequest
+        ): CommonResponse<OrderDetail> {
+            return orderService.create(request)
+        }
+    }
+
+    **Call Order:**
+    1. get_file("OrderStatus")
+    2. get_file("OrderSummary")
+    3. get_file("CreateOrderRequest")
+    4. get_file("OrderDetail")
+    5. get_file("OrderItemRequest") ← Internal type of CreateOrderRequest
+    6. get_file("OrderItemResponse") ← Internal type of OrderDetail
+
+    ---
+
+    ## Response Rules
+
+    After collection is complete, summarize the role of the Controller to be extracted as an API.
+
+    Forbidden output:
+    - "I will start the analysis."
+    - "Looking at the provided controller code,"
+    - "Collection is complete."
+    - Code blocks wrapped in backticks
+    - Unnecessary markdown formatting ("##", "**")
+
+    ```
+    Collection complete. This controller is an order-related API that provides order retrieval and creation functionality.
+    1. OrderStatus: Enumeration representing order status (PENDING, CONFIRMED, CANCELLED)
+    2. OrderSummary: DTO containing order summary information (orderId, status, totalAmount)
+    3. CreateOrderRequest: Order creation request DTO (items, shippingAddress, memo)
+    4. OrderItemRequest: Order item request DTO (productId, quantity)
+    5. OrderDetail: DTO containing order detail information (orderId, status, items)
+    6. OrderItemResponse: Order item response DTO (productId, quantity, price)
+    ```
+
+    """
+        .trimIndent()
+
+private val FILE_COLLECT_KO_SYSTEM_PROMPT =
     """
     # File Collector
 

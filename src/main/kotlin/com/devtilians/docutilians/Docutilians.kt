@@ -7,6 +7,7 @@ import com.devtilians.docutilians.cli.components.table.FileTable
 import com.devtilians.docutilians.cli.components.text.Banner
 import com.devtilians.docutilians.common.Config
 import com.devtilians.docutilians.constants.Colors
+import com.devtilians.docutilians.constants.Language
 import com.devtilians.docutilians.exceptions.OpenApiYamlParsedException
 import com.devtilians.docutilians.llm.AnthropicClient
 import com.devtilians.docutilians.llm.LlmClient
@@ -51,11 +52,18 @@ class Docutilians : CliktCommand() {
                         "Available models: claude-haiku-4-5, claude-sonnet-4-5",
             )
             .default("claude-haiku-4-5")
-
     private val openApiYamlOutputDirPath: Path by
         option("-o", "--openapi-output", help = "Output path for the generated OpenAPI YAML file")
             .path(mustExist = false, canBeFile = true, canBeDir = false)
             .default(Path.of(".docutilians/openapi"))
+    private val language: String by
+        option(
+                "-l",
+                "--language",
+                help = "Language for prompts and messages (default: EN)\nAvailable: EN, KO",
+            )
+            .default("EN")
+
     private val projectDir: Path? by
         argument(name = "PROJECT_DIR", help = "Project directory to scan")
             .path(mustExist = true, canBeFile = false)
@@ -75,8 +83,19 @@ class Docutilians : CliktCommand() {
             else AnthropicClient(model = Model.of(claudeApiModel))
 
         val projectDirPath = determineProjectDir(t, projectDir)
+        val languageEnum =
+            try {
+                Language.valueOf(language.uppercase())
+            } catch (e: IllegalArgumentException) {
+                Language.EN
+            }
 
-        config = Config(projectDirPath = projectDirPath, outputDirPath = openApiYamlOutputDirPath)
+        config =
+            Config(
+                projectDirPath = projectDirPath,
+                outputDirPath = openApiYamlOutputDirPath,
+                language = languageEnum,
+            )
     }
 
     override fun run() = runBlocking {
@@ -221,7 +240,9 @@ class Docutilians : CliktCommand() {
                     retry(retryOn = { it is OpenApiYamlParsedException }) {
                         val fileCollectPrompt =
                             FileCollectPromptBuilder(
-                                    RouterFileInfo(scanFile.absolutePath, scanFile.content)
+                                    fileInfo =
+                                        RouterFileInfo(scanFile.absolutePath, scanFile.content),
+                                    language = config.language,
                                 )
                                 .build()
 
@@ -242,6 +263,7 @@ class Docutilians : CliktCommand() {
                                         relevantFileResult.files.map {
                                             RouterFileInfo(it.absolutePath, it.sourceCode)
                                         },
+                                    language = config.language,
                                 )
                                 .build()
 
