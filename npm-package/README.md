@@ -32,15 +32,9 @@ more manual documentation—just point to your project and get a complete `opena
 | **🔍 Auto Type Analysis**       | Recursively scans DTOs, Enums, and Entities to build complete schemas     |
 | **🤖 Multi-Agent Architecture** | File Collector → YAML Generator → Aggregator pipeline for higher accuracy |
 | **📦 Single Output**            | Generates a clean, merged `openapi.yaml` ready for Swagger UI             |
+| **📖 Built-in Docs Viewer**     | Generates Scalar HTML for instant API documentation preview               |
 
 ## 🚀 Quickstart
-
-### Installation
-
-```bash
-# npm
-npm install -g docutilians
-```
 
 ### Basic Usage
 
@@ -48,18 +42,18 @@ npm install -g docutilians
 # Generate OpenAPI spec from your project
 docutilians ./target-project
 
-# Custom output directory
-docutilians ./target-project -o ./docs/openapi
-
-# Anthropic Key
-docutilians -k your-api-key
+# With options
+docutilians ./target-project -o ./docs/openapi -m claude-sonnet-4-5 -k sk-claudekey... -l KO
 ```
 
-### Environment Setup
+### CLI Options
 
-```bash
-export ANTHROPIC_API_KEY=your-api-key
-```
+| Option                 | Description                                            | Default                 |
+|------------------------|--------------------------------------------------------|-------------------------|
+| `-k, --claude-api-key` | Anthropic Claude API Key                               | `ANTHROPIC_API_KEY` env |
+| `-m, --claude-model`   | Model to use (`claude-haiku-4-5`, `claude-sonnet-4-5`) | `claude-haiku-4-5`      |
+| `-o, --openapi-output` | Output directory for generated files                   | `.docutilians/openapi`  |
+| `-l, --language`       | Language for prompts (`EN`, `KO`)                      | `EN`                    |
 
 ## 🔄 How it Works
 
@@ -80,23 +74,26 @@ export ANTHROPIC_API_KEY=your-api-key
 └────────────────────┬────────────────────┘
                      ▼
 ┌─────────────────────────────────────────┐
-│ 4. Aggregator Agent                     │
-│    Merges & generates metadata          │
+│ 4. Aggregator                           │
+│    Merges partials & generates HTML     │
 └────────────────────┬────────────────────┘
                      ▼
-              openapi.yaml ✅
+         openapi.yaml + index.html ✅
 ```
 
 ## 📁 Output Structure
 
 ```
 .docutilians/openapi/
-├── components/
+├── partials/
 │   ├── chat_controller.yaml
 │   ├── user_controller.yaml
 │   └── order_controller.yaml
-└── openapi.yaml          # Final merged file
+├── openapi.yaml          # Final merged spec
+└── index.html            # Scalar API docs viewer
 ```
+
+> 💡 **Tip:** Open `index.html` directly in your browser — no server required!
 
 ## ⚖️ License
 
