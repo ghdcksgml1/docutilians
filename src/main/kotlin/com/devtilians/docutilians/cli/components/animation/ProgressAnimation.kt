@@ -1,9 +1,12 @@
 package com.devtilians.docutilians.cli.components.animation
 
+import com.devtilians.docutilians.common.Config
 import com.devtilians.docutilians.constants.Colors
 import com.github.ajalt.mordant.animation.Animation
 import com.github.ajalt.mordant.animation.textAnimation
 import com.github.ajalt.mordant.terminal.Terminal
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.seconds
 
 data class ProgressState(
     val spinner: String = "⠋",
@@ -16,7 +19,7 @@ data class ProgressState(
     val logs: List<String> = emptyList(),
 )
 
-class ProgressAnimation(private val t: Terminal) {
+class ProgressAnimation(private val t: Terminal, private val config: Config) {
 
     private val spinnerFrames = listOf("⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏")
     private var frameIndex = 0
@@ -94,10 +97,18 @@ class ProgressAnimation(private val t: Terminal) {
         animation.update(currentState)
     }
 
-    fun incrementFail() {
+    suspend fun incrementFail(e: Throwable) {
+        this.incrementFail(e.message)
+    }
+
+    suspend fun incrementFail(message: String? = null) {
+        message?.let { addLog("Error: ${Colors.error(message)}") }
+
         currentState =
             currentState.copy(current = currentState.current + 1, fail = currentState.fail + 1)
         animation.update(currentState)
+
+        delay(3.seconds)
     }
 
     fun stop() {
