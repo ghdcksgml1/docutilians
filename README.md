@@ -38,6 +38,13 @@ more manual documentation—just point to your project and get a complete `opena
 
 ## 🚀 Quickstart
 
+### Installation
+
+```bash
+# Using npm
+npm install -g docutilians
+```
+
 ### Basic Usage
 
 ```bash
@@ -56,6 +63,8 @@ docutilians ./target-project -o ./docs/openapi -m claude-sonnet-4-5 -k sk-claude
 | `-m, --claude-model`   | Model to use (`claude-haiku-4-5`, `claude-sonnet-4-5`) | `claude-haiku-4-5`      |
 | `-o, --openapi-output` | Output directory for generated files                   | `.docutilians/openapi`  |
 | `-l, --language`       | Language for prompts (`EN`, `KO`)                      | `EN`                    |
+
+![result.png](assets/result.png)
 
 ## 🔄 How it Works
 
@@ -92,7 +101,7 @@ docutilians ./target-project -o ./docs/openapi -m claude-sonnet-4-5 -k sk-claude
 │   ├── user_controller.yaml
 │   └── order_controller.yaml
 ├── openapi.yaml          # Final merged spec
-└── index.html            # Scalar API docs viewer
+└── openapi.html            # Scalar API docs viewer
 ```
 
 > 💡 **Tip:** Open `index.html` directly in your browser — no server required!
