@@ -31,6 +31,15 @@ dependencies {
     implementation("com.google.guava:guava:32.1.3-jre")
     implementation("io.swagger.parser.v3:swagger-parser:2.1.22")
 
+    // Tree Sitter
+    implementation("io.github.bonede:tree-sitter:0.25.3")
+    implementation("io.github.bonede:tree-sitter-kotlin:0.3.8.1")
+    implementation("io.github.bonede:tree-sitter-java:0.23.4")
+    implementation("io.github.bonede:tree-sitter-typescript:0.23.2")
+    implementation("io.github.bonede:tree-sitter-javascript:0.23.1")
+    implementation("io.github.bonede:tree-sitter-python:0.23.4")
+    implementation("io.github.bonede:tree-sitter-go:0.23.3")
+
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
