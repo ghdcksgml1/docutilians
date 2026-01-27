@@ -240,7 +240,7 @@ class Docutilians : CliktCommand() {
     ): Pair<List<String>, ProgressAnimation> {
         val generatedYamls = mutableListOf<String>()
 
-        val progress = ProgressAnimation(t)
+        val progress = ProgressAnimation(t, config)
         progress.start(scanResult.files.size)
 
         scanResult.files.forEach { scanFile ->
@@ -304,11 +304,11 @@ class Docutilians : CliktCommand() {
                             FileUtils.writeFile(targetFilePath, openApi.yaml)
                             progress.incrementSuccess()
                         } else {
-                            progress.incrementFail()
+                            progress.incrementFail("No OpenAPI YAML generated.")
                         }
                     }
                 }
-                .onFailure { _ -> progress.incrementFail() }
+                .onFailure { e -> progress.incrementFail(e) }
         }
 
         progress.stop()

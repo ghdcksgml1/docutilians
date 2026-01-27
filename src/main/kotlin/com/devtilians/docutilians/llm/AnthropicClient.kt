@@ -183,7 +183,8 @@ class AnthropicClient(
             GetFile.NAME -> {
                 val getFile = toolUseBlock.input(GetFile::class.java)
                 return if (getFile != null) {
-                    GetFile(getFile.absolutePath).execute()
+                    GetFile(absolutePath = getFile.absolutePath, className = getFile.className)
+                        .execute()
                 } else {
                     GetFile.Response(result = "Error: Invalid input for GetFile tool.")
                 }
