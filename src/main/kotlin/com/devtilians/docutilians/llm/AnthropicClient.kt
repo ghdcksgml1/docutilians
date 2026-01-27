@@ -9,6 +9,7 @@ import com.devtilians.docutilians.exceptions.OpenApiYamlParsedException
 import com.devtilians.docutilians.llm.prompt.PromptBuilder.Prompt
 import com.devtilians.docutilians.llm.tool.GetFile
 import com.devtilians.docutilians.utils.OpenApiUtils
+import com.devtilians.docutilians.utils.extensions.aggregateToken
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
@@ -30,22 +31,27 @@ class AnthropicClient(
         prompt: Prompt,
         useCacheControl: Boolean,
     ): RelevantFileResult {
-        val textBlockParam =
-            BetaTextBlockParam.builder()
-                .text(prompt.userPrompt)
-                .apply {
-                    if (useCacheControl) {
-                        cacheControl(cacheControl)
-                    }
-                }
-                .build()
+        val textBlockParam = BetaTextBlockParam.builder().text(prompt.userPrompt).build()
 
         val params =
             MessageCreateParams.builder()
                 .model(model)
                 .putAdditionalHeader("anthropic-beta", "structured-outputs-2025-11-13")
                 .maxTokens(5000)
-                .system(prompt.systemPrompt)
+                .system(
+                    MessageCreateParams.System.ofBetaTextBlockParams(
+                        listOf(
+                            BetaTextBlockParam.builder()
+                                .text(prompt.systemPrompt)
+                                .apply {
+                                    if (useCacheControl) {
+                                        cacheControl(cacheControl)
+                                    }
+                                }
+                                .build()
+                        )
+                    )
+                )
                 .addTool(GetFile::class.java)
                 .addUserMessage(
                     BetaMessageParam.Content.ofBetaContentBlockParams(
@@ -59,7 +65,10 @@ class AnthropicClient(
 
         withContext(dispatcher) {
             while (recursiveCalls++ < maxRecursiveCalls) {
-                val response = client.beta().messages().create(params.build()).validate()
+                val response =
+                    client.beta().messages().create(params.build()).validate().apply {
+                        this.aggregateToken()
+                    }
 
                 val toolUseBlocks = mutableListOf<BetaToolUseBlock>()
 
@@ -131,22 +140,27 @@ class AnthropicClient(
         prompt: Prompt,
         useCacheControl: Boolean,
     ): OpenApi? {
-        val textBlockParam =
-            BetaTextBlockParam.builder()
-                .text(prompt.userPrompt)
-                .apply {
-                    if (useCacheControl) {
-                        cacheControl(cacheControl)
-                    }
-                }
-                .build()
+        val textBlockParam = BetaTextBlockParam.builder().text(prompt.userPrompt).build()
 
         val params =
             MessageCreateParams.builder()
                 .model(model)
                 .putAdditionalHeader("anthropic-beta", "structured-outputs-2025-11-13")
-                .maxTokens(5000)
-                .system(prompt.systemPrompt)
+                .maxTokens(20000)
+                .system(
+                    MessageCreateParams.System.ofBetaTextBlockParams(
+                        listOf(
+                            BetaTextBlockParam.builder()
+                                .text(prompt.systemPrompt)
+                                .apply {
+                                    if (useCacheControl) {
+                                        cacheControl(cacheControl)
+                                    }
+                                }
+                                .build()
+                        )
+                    )
+                )
                 .addUserMessage(
                     BetaMessageParam.Content.ofBetaContentBlockParams(
                         listOf(BetaContentBlockParam.ofText(textBlockParam))
@@ -156,7 +170,10 @@ class AnthropicClient(
         val openApiYaml = StringBuilder()
 
         withContext(dispatcher) {
-            val response = client.beta().messages().create(params.build()).validate()
+            val response =
+                client.beta().messages().create(params.build()).validate().apply {
+                    this.aggregateToken()
+                }
 
             response.content().asSequence().forEach { contentBlock ->
                 contentBlock.text().asSequence().forEach { textBlock ->
@@ -169,9 +186,7 @@ class AnthropicClient(
             return null
         }
 
-        return OpenApi(
-            yaml = stripCodeBlock(openApiYaml.toString()).also { yaml -> verifyOpenApi(yaml) }
-        )
+        return OpenApi(yaml = stripCodeBlock(openApiYaml.toString()))
     }
 
     override suspend fun aggregateOpenApiYamls(prompt: Prompt, useCacheControl: Boolean): OpenApi? {

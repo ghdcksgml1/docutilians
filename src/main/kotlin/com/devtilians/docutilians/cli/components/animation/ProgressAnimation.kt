@@ -1,7 +1,9 @@
 package com.devtilians.docutilians.cli.components.animation
 
 import com.devtilians.docutilians.common.Config
+import com.devtilians.docutilians.common.GlobalState
 import com.devtilians.docutilians.constants.Colors
+import com.devtilians.docutilians.llm.TokenUsage
 import com.github.ajalt.mordant.animation.Animation
 import com.github.ajalt.mordant.animation.textAnimation
 import com.github.ajalt.mordant.terminal.Terminal
@@ -55,8 +57,42 @@ class ProgressAnimation(private val t: Terminal, private val config: Config) {
                 appendLine(
                     "   ${Colors.Raw.success("✓ ${state.success}")}  ${Colors.Raw.error("✗ ${state.fail}")}"
                 )
+                appendLine()
+                append(formatTokenUsage(GlobalState.tokenUsage)) // GlobalState에서 직접 참조
+                appendLine()
                 append(Colors.Raw.primary("─".repeat(60)))
             }
+        }
+
+    private fun formatTokenUsage(usage: TokenUsage): String {
+        val input = formatNumber(usage.inputTokens)
+        val output = formatNumber(usage.outputTokens)
+        val cached = formatNumber(usage.cachedTokens)
+        val cost = String.format("%.2f", usage.dollarCost)
+
+        val content = buildString {
+            append("[Input: $input] [Output: $output]")
+            if (usage.cachedTokens > 0) append(" [Cache: $cached]")
+            append(" [\$$cost]")
+        }
+
+        val width = maxOf(content.length + 4, 40)
+        val padding = width - content.length - 4
+
+        return buildString {
+            appendLine("   ${Colors.Raw.textMuted("┌─ Token Usage ─${"─".repeat(width - 17)}┐")}")
+            appendLine(
+                "   ${Colors.Raw.textMuted("│")} $content${" ".repeat(padding)} ${Colors.Raw.textMuted("│")}"
+            )
+            append("   ${Colors.Raw.textMuted("└${"─".repeat(width - 2)}┘")}")
+        }
+    }
+
+    private fun formatNumber(n: Long): String =
+        when {
+            n >= 1_000_000 -> String.format("%.1fM", n / 1_000_000.0)
+            n >= 1_000 -> String.format("%.1fK", n / 1_000.0)
+            else -> n.toString()
         }
 
     fun start(total: Int) {
