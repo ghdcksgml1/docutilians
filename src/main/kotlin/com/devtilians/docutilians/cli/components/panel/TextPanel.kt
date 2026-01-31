@@ -13,10 +13,7 @@ enum class TruncateSide {
     RIGHT,
 }
 
-/**
- * CHUCK_UI Text Panel
- * Simple text display with separator lines (no box frame)
- */
+/** CHUCK_UI Text Panel Simple text display with separator lines (no box frame) */
 data class TextPanelRequest(
     val title: String? = null,
     val content: String,
@@ -49,7 +46,8 @@ object TextPanel {
 
             // Content
             request.content.lines().forEach { line ->
-                val truncated = truncateLine(line, request.width, request.truncate, request.ellipsis)
+                val truncated =
+                    truncateLine(line, request.width, request.truncate, request.ellipsis)
                 appendLine("  ${request.contentColor(truncated)}")
             }
 

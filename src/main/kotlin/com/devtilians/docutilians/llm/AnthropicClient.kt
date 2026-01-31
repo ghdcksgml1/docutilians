@@ -10,11 +10,11 @@ import com.devtilians.docutilians.llm.prompt.PromptBuilder.Prompt
 import com.devtilians.docutilians.llm.tool.GetFile
 import com.devtilians.docutilians.utils.OpenApiUtils
 import com.devtilians.docutilians.utils.extensions.aggregateToken
+import kotlin.jvm.optionals.asSequence
+import kotlin.jvm.optionals.getOrNull
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
-import kotlin.jvm.optionals.asSequence
-import kotlin.jvm.optionals.getOrNull
 
 class AnthropicClient(
     private val apiKey: String = System.getenv("ANTHROPIC_API_KEY"),
@@ -225,9 +225,7 @@ class AnthropicClient(
             .trim()
     }
 
-    /**
-     * Validates that response is valid OpenAPI YAML, not markdown or plain text
-     */
+    /** Validates that response is valid OpenAPI YAML, not markdown or plain text */
     private fun isValidYamlResponse(content: String): Boolean {
         val trimmed = content.trim()
 

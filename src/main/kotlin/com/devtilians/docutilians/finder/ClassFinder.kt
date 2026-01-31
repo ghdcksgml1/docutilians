@@ -1,14 +1,14 @@
 package com.devtilians.docutilians.finder
 
 import com.devtilians.docutilians.utils.FileUtils
-import org.treesitter.TSLanguage
-import org.treesitter.TSNode
-import org.treesitter.TSParser
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.readText
+import org.treesitter.TSLanguage
+import org.treesitter.TSNode
+import org.treesitter.TSParser
 
 abstract class ClassFinder {
 

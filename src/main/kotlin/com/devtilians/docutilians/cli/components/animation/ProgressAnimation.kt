@@ -7,8 +7,8 @@ import com.devtilians.docutilians.llm.TokenUsage
 import com.github.ajalt.mordant.animation.Animation
 import com.github.ajalt.mordant.animation.textAnimation
 import com.github.ajalt.mordant.terminal.Terminal
-import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
 
 data class ProgressState(
     val spinner: String = "⠋",
@@ -56,7 +56,9 @@ class ProgressAnimation(private val t: Terminal, private val config: Config) {
                 if (state.logs.isNotEmpty()) {
                     state.logs.forEach { log ->
                         val logDisplay = if (log.length > 55) log.take(52) + "..." else log
-                        appendLine("    ${Colors.Raw.textMuted("▸")} ${Colors.Raw.textMuted(logDisplay)}")
+                        appendLine(
+                            "    ${Colors.Raw.textMuted("▸")} ${Colors.Raw.textMuted(logDisplay)}"
+                        )
                     }
                     appendLine()
                 }

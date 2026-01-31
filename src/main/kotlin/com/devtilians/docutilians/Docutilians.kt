@@ -39,13 +39,13 @@ import com.github.ajalt.mordant.platform.MultiplatformSystem.exitProcess
 import com.github.ajalt.mordant.rendering.AnsiLevel
 import com.github.ajalt.mordant.terminal.Terminal
 import com.google.common.base.CaseFormat
-import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.pathString
+import kotlinx.coroutines.runBlocking
 
 class Docutilians : CliktCommand() {
     val claudeApiKey: String by

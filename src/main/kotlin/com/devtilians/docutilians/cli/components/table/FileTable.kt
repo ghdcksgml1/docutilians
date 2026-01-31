@@ -13,10 +13,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.math.log10
 import kotlin.math.pow
 
-/**
- * CHUCK_UI File Table
- * Cyberpunk-styled data grid with neon accents and glassmorphism feel
- */
+/** CHUCK_UI File Table Cyberpunk-styled data grid with neon accents and glassmorphism feel */
 class FileTable(private val terminal: Terminal) {
 
     private data class FileRenderItem(
@@ -84,8 +81,7 @@ class FileTable(private val terminal: Terminal) {
             isDir -> Colors.Raw.primary("[$label]")
             ext in listOf("kt", "java", "ts", "js", "py", "go", "rs") ->
                 Colors.Raw.success("[$label]")
-            ext in listOf("yaml", "yml", "json", "xml") ->
-                Colors.Raw.warning("[$label]")
+            ext in listOf("yaml", "yml", "json", "xml") -> Colors.Raw.warning("[$label]")
             else -> Colors.Raw.textMuted("[$label]")
         }
     }
@@ -102,7 +98,8 @@ class FileTable(private val terminal: Terminal) {
             // Web / Node
             "js" -> "⚡" to TextColors.rgb("#fefe00")
             "ts" -> "💠" to TextColors.rgb("#00f3ff")
-            "jsx", "tsx" -> "⚛️" to TextColors.rgb("#00ccff")
+            "jsx",
+            "tsx" -> "⚛️" to TextColors.rgb("#00ccff")
             "html" -> "🌐" to TextColors.rgb("#ff5500")
             "css" -> "🎨" to TextColors.rgb("#00f3ff")
             "vue" -> "💚" to TextColors.rgb("#0aff0a")
@@ -111,19 +108,29 @@ class FileTable(private val terminal: Terminal) {
             "rs" -> "🦀" to TextColors.rgb("#ff6633")
             "go" -> "🐹" to TextColors.rgb("#00f3ff")
             "py" -> "🐍" to TextColors.rgb("#fefe00")
-            "c", "cpp", "h" -> "⚙️" to Colors.Raw.textMuted
+            "c",
+            "cpp",
+            "h" -> "⚙️" to Colors.Raw.textMuted
 
             // Config / Data
             "json" -> "📦" to TextColors.rgb("#fefe00")
-            "yaml", "yml" -> "📋" to Colors.Raw.primary
+            "yaml",
+            "yml" -> "📋" to Colors.Raw.primary
             "xml" -> "📄" to Colors.Raw.textMuted
             "md" -> "📝" to Colors.Raw.textWhite
 
             // Graphics
-            "png", "jpg", "jpeg", "svg", "ico" -> "🖼️" to TextColors.rgb("#bc13fe")
+            "png",
+            "jpg",
+            "jpeg",
+            "svg",
+            "ico" -> "🖼️" to TextColors.rgb("#bc13fe")
 
             // Archives
-            "zip", "tar", "gz", "7z" -> "📦" to TextColors.rgb("#fefe00")
+            "zip",
+            "tar",
+            "gz",
+            "7z" -> "📦" to TextColors.rgb("#fefe00")
 
             // Default
             else -> "📄" to Colors.Raw.textMuted

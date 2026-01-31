@@ -5,10 +5,7 @@ import com.github.ajalt.mordant.rendering.TextStyle
 import com.github.ajalt.mordant.rendering.Widget
 import com.github.ajalt.mordant.widgets.Text
 
-/**
- * CHUCK_UI Box Panel
- * Simple panel with separator lines (no box frame)
- */
+/** CHUCK_UI Box Panel Simple panel with separator lines (no box frame) */
 data class BoxPanelRequest(
     val title: String,
     val titleColor: TextStyle = Colors.Raw.primary,

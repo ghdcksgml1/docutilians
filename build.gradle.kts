@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm") version "2.2.20"
     application
+    id("com.ncorti.ktfmt.gradle") version "0.21.0"
 }
 
 group = "com.devtilians"
@@ -65,3 +66,7 @@ tasks.jar {
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
+
+ktfmt { kotlinLangStyle() }
+
+tasks.named("build") { dependsOn("ktfmtFormat") }

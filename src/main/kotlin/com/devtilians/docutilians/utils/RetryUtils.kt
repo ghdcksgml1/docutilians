@@ -1,8 +1,8 @@
 package com.devtilians.docutilians.utils
 
-import kotlinx.coroutines.delay
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
 
 suspend fun <T> retry(
     times: Int = 3,

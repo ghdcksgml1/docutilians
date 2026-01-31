@@ -7,10 +7,7 @@ import com.github.ajalt.mordant.rendering.TextStyle
 import com.github.ajalt.mordant.rendering.TextStyles
 import com.github.ajalt.mordant.terminal.Terminal
 
-/**
- * ScannedFile Table
- * Displays detected API controller files with framework info
- */
+/** ScannedFile Table Displays detected API controller files with framework info */
 class ScannedFileTable(private val terminal: Terminal) {
 
     fun render(files: List<ScannedFile>, title: String = "DETECTED CONTROLLERS") {
@@ -84,8 +81,11 @@ class ScannedFileTable(private val terminal: Terminal) {
             "NestJS" -> Colors.Raw.error(label)
             "Express" -> Colors.Raw.warning(label)
             "FastAPI" -> Colors.Raw.primary(label)
-            "Gin", "Echo", "Fiber" -> Colors.Raw.primary(label)
-            "Django", "Flask" -> Colors.Raw.success(label)
+            "Gin",
+            "Echo",
+            "Fiber" -> Colors.Raw.primary(label)
+            "Django",
+            "Flask" -> Colors.Raw.success(label)
             else -> Colors.Raw.textMuted(label)
         }
     }
