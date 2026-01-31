@@ -1,5 +1,6 @@
 package com.devtilians.docutilians.llm.tool
 
+import com.devtilians.docutilians.common.GlobalState
 import com.devtilians.docutilians.finder.ClassFinderRouter
 import com.devtilians.docutilians.llm.tool.GetFile.Response
 import com.fasterxml.jackson.annotation.JsonClassDescription
@@ -27,16 +28,22 @@ class GetFile(
     override suspend fun execute(): Response {
         val path = Path.of(this.absolutePath)
 
-        return ClassFinderRouter.getFinderByExtension(path.extension)
-            ?.findClassByName(path, className)
-            ?.let {
-                Response(
-                    result = "Success",
-                    absolutePath = it.filePath,
-                    className = it.className,
-                    content = it.sourceCode,
-                    imports = it.imports,
-                )
+        return runCatching {
+                ClassFinderRouter.getFinderByExtension(path.extension)
+                    ?.findClassByName(path, className)
+                    ?.let {
+                        Response(
+                            result = "Success",
+                            absolutePath = it.filePath,
+                            className = it.className,
+                            content = it.sourceCode,
+                            imports = it.imports,
+                        )
+                    }
+            }
+            .getOrElse { e ->
+                GlobalState.logError(e)
+                null
             }
             ?: Response(
                 result = "Error: File not found at path '${this.absolutePath}'.",

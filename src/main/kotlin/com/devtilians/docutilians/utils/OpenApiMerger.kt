@@ -1,13 +1,12 @@
 package com.devtilians.docutilians.utils
 
+import com.devtilians.docutilians.common.GlobalState
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
 
 object OpenApiMerger {
 
-    /**
-     * Validates if content looks like valid OpenAPI YAML
-     */
+    /** Validates if content looks like valid OpenAPI YAML */
     private fun isValidOpenApiYaml(content: String): Boolean {
         val trimmed = content.trim()
 
@@ -18,12 +17,13 @@ object OpenApiMerger {
         }
 
         // Should not contain markdown patterns
-        val invalidPatterns = listOf(
-            Regex("""^\d+\.\s+\*\*""", RegexOption.MULTILINE),  // 1. **filename**
-            Regex("""^#+\s+""", RegexOption.MULTILINE),         // # Header
-            Regex("""^-\s+\*\*""", RegexOption.MULTILINE),      // - **item**
-            Regex("""```"""),                                    // code blocks
-        )
+        val invalidPatterns =
+            listOf(
+                Regex("""^\d+\.\s+\*\*""", RegexOption.MULTILINE), // 1. **filename**
+                Regex("""^#+\s+""", RegexOption.MULTILINE), // # Header
+                Regex("""^-\s+\*\*""", RegexOption.MULTILINE), // - **item**
+                Regex("""```"""), // code blocks
+            )
         if (invalidPatterns.any { it.containsMatchIn(trimmed) }) {
             return false
         }
@@ -31,7 +31,7 @@ object OpenApiMerger {
         return true
     }
 
-    fun mergeOpenApiYamls(yamls: List<String>, title: String, version: String): String {
+    suspend fun mergeOpenApiYamls(yamls: List<String>, title: String, version: String): String {
         val yaml = Yaml()
         val allPaths = sortedMapOf<String, Any>()
         val allSchemas = sortedMapOf<String, Any>()
@@ -39,16 +39,16 @@ object OpenApiMerger {
         yamls.forEach { content ->
             // Skip invalid YAML content
             if (!isValidOpenApiYaml(content)) {
-                println("[WARN] Skipping invalid YAML content: ${content.take(50)}...")
+                GlobalState.logError("[WARN] Skipping invalid YAML content: ${content.take(50)}...")
                 return@forEach
             }
 
-            val parsed = runCatching {
-                yaml.load<Map<String, Any>>(content)
-            }.getOrElse { e ->
-                println("[WARN] Failed to parse YAML: ${e.message}")
-                null
-            } ?: return@forEach
+            val parsed =
+                runCatching { yaml.load<Map<String, Any>>(content) }
+                    .getOrElse { e ->
+                        GlobalState.logError("[WARN] Failed to parse YAML: ${e.message}")
+                        null
+                    } ?: return@forEach
 
             (parsed["paths"] as? Map<String, Any>)?.forEach { (path, methods) ->
                 allPaths.merge(path, methods) { old, new ->

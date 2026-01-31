@@ -8,6 +8,7 @@ import com.devtilians.docutilians.cli.components.table.FileTable
 import com.devtilians.docutilians.cli.components.table.ScannedFileTable
 import com.devtilians.docutilians.cli.components.text.Banner
 import com.devtilians.docutilians.common.Config
+import com.devtilians.docutilians.common.ExecutionLogger
 import com.devtilians.docutilians.common.GlobalState
 import com.devtilians.docutilians.constants.Colors
 import com.devtilians.docutilians.constants.Language
@@ -20,8 +21,8 @@ import com.devtilians.docutilians.llm.prompt.FileCollectPromptBuilder
 import com.devtilians.docutilians.llm.prompt.PartialOpenApiYamlPromptBuilder
 import com.devtilians.docutilians.llm.prompt.PromptBuilder.RouterFileInfo
 import com.devtilians.docutilians.scanner.CodeScanner
-import com.devtilians.docutilians.scanner.CodeScanner.ScannedFile
 import com.devtilians.docutilians.scanner.CodeScanner.ScanResult
+import com.devtilians.docutilians.scanner.CodeScanner.ScannedFile
 import com.devtilians.docutilians.utils.FileUtils
 import com.devtilians.docutilians.utils.OpenApiMerger
 import com.devtilians.docutilians.utils.retry
@@ -40,6 +41,7 @@ import com.github.ajalt.mordant.terminal.Terminal
 import com.google.common.base.CaseFormat
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.nameWithoutExtension
@@ -83,6 +85,19 @@ class Docutilians : CliktCommand() {
     private lateinit var llm: LlmClient
     private lateinit var config: Config
 
+    private val executionLogger by lazy {
+        ExecutionLogger(Paths.get(".docutilians/logs/execution_log.json"))
+    }
+
+    private fun logExecution(
+        command: String,
+        success: Boolean,
+        message: String? = null,
+        changedFiles: List<String> = emptyList(),
+    ) {
+        executionLogger.log(command, success, message, changedFiles)
+    }
+
     fun initialize(t: Terminal) {
         printGreeting(t)
 
@@ -115,32 +130,83 @@ class Docutilians : CliktCommand() {
 
     override fun run() = runBlocking {
         val t = Terminal(ansiLevel = AnsiLevel.TRUECOLOR, interactive = true)
-
         runCatching { initialize(t) }
             .onFailure { e ->
+                logExecution("initialize", false, e.message)
                 when (e) {
                     is CliktError -> throw e
                     else -> throw UsageError("Initialization failed: ${e.message}")
                 }
             }
-        val scanResult = scanProjectTargetDir(t, config.projectDirPath)
+        logExecution("initialize", true, "Initialization success")
 
-        // Show detected files and allow user to modify selection
+        val scanResult =
+            runCatching { scanProjectTargetDir(t, config.projectDirPath) }
+                .onFailure { e ->
+                    logExecution("scanProjectTargetDir", false, e.message)
+                    GlobalState.logError(e)
+                }
+                .getOrNull()
+        if (scanResult == null) return@runBlocking
+
+        logExecution(
+            "scanProjectTargetDir",
+            true,
+            "Scan success",
+            scanResult.files.map { it.absolutePath },
+        )
+
         val selectedFiles = selectFilesToProcess(t, scanResult.files)
+        logExecution(
+            "selectFilesToProcess",
+            true,
+            "File selection",
+            selectedFiles.map { it.absolutePath },
+        )
 
         if (selectedFiles.isEmpty()) {
+            logExecution("selectFilesToProcess", false, "No files selected")
             t.println(Colors.warning("No files selected. Exiting."))
             return@runBlocking
         }
 
-        val (generatedYamls, progress) = generateFileToOpenApiYaml(t, selectedFiles)
+        val (generatedYamls, progress) =
+            runCatching { generateFileToOpenApiYaml(t, selectedFiles) }
+                .onFailure { e ->
+                    logExecution(
+                        "generateFileToOpenApiYaml",
+                        false,
+                        e.message,
+                        selectedFiles.map { it.absolutePath },
+                    )
+                    GlobalState.logError(e)
+                }
+                .getOrNull() ?: return@runBlocking
+
+        logExecution(
+            "generateFileToOpenApiYaml",
+            true,
+            "YAML generation success",
+            selectedFiles.map { it.absolutePath },
+        )
 
         val mergedYaml = OpenApiMerger.mergeOpenApiYamls(generatedYamls, "Generated API", "1.0.0")
-
         FileUtils.writeFile(config.getMergeYamlOutputFilePath(), mergedYaml)
         FileUtils.writeFile(
             config.getScalarHtmlFilePath(),
             ScalarHtmlGenerator.generateHtmlContent(mergedYaml),
+        )
+        logExecution(
+            "mergeOpenApiYamls",
+            true,
+            "Merged YAML written",
+            listOf(config.getMergeYamlOutputFilePath().toString()),
+        )
+        logExecution(
+            "generateScalarHtml",
+            true,
+            "Scalar HTML written",
+            listOf(config.getScalarHtmlFilePath().toString()),
         )
 
         val (successCount, failCount) = progress.getResult()
@@ -261,9 +327,11 @@ class Docutilians : CliktCommand() {
             if (scanResult.summary.byFramework.isNotEmpty()) {
                 t.println(
                     Colors.info("  └─ Frameworks: ") +
-                        Colors.textMuted(scanResult.summary.byFramework.entries.joinToString(", ") {
-                            "${it.key}(${it.value})"
-                        })
+                        Colors.textMuted(
+                            scanResult.summary.byFramework.entries.joinToString(", ") {
+                                "${it.key}(${it.value})"
+                            }
+                        )
                 )
             }
         }
@@ -271,10 +339,11 @@ class Docutilians : CliktCommand() {
         return scanResult
     }
 
-    /**
-     * Display detected files and allow user to add/remove files
-     */
-    private fun selectFilesToProcess(t: Terminal, detectedFiles: List<ScannedFile>): List<ScannedFile> {
+    /** Display detected files and allow user to add/remove files */
+    private fun selectFilesToProcess(
+        t: Terminal,
+        detectedFiles: List<ScannedFile>,
+    ): List<ScannedFile> {
         val selectedFiles = detectedFiles.toMutableList()
 
         while (true) {
@@ -284,19 +353,27 @@ class Docutilians : CliktCommand() {
             // Show options
             t.println(Colors.Raw.textMuted("  ${"─".repeat(75)}"))
             t.println("  ${Colors.Raw.primary("Commands:")}")
-            t.println("    ${Colors.Raw.accent("y")}        ${Colors.Raw.textMuted("─ Proceed with these files")}")
-            t.println("    ${Colors.Raw.accent("-N")}       ${Colors.Raw.textMuted("─ Remove file by number (e.g., -1, -3)")}")
-            t.println("    ${Colors.Raw.accent("+path")}    ${Colors.Raw.textMuted("─ Add file by path (e.g., +src/Controller.kt)")}")
+            t.println(
+                "    ${Colors.Raw.accent("y")}        ${Colors.Raw.textMuted("─ Proceed with these files")}"
+            )
+            t.println(
+                "    ${Colors.Raw.accent("-N")}       ${Colors.Raw.textMuted("─ Remove file by number (e.g., -1, -3)")}"
+            )
+            t.println(
+                "    ${Colors.Raw.accent("+path")}    ${Colors.Raw.textMuted("─ Add file by path (e.g., +src/Controller.kt)")}"
+            )
             t.println("    ${Colors.Raw.accent("q")}        ${Colors.Raw.textMuted("─ Quit")}")
             t.println(Colors.Raw.textMuted("  ${"─".repeat(75)}"))
 
-            val input = InputPanel.prompt(
-                t,
-                InputPanelRequest(
-                    label = "Enter command",
-                    hint = "y to proceed, -N to remove, +path to add, q to quit",
-                )
-            )?.trim() ?: ""
+            val input =
+                InputPanel.prompt(
+                        t,
+                        InputPanelRequest(
+                            label = "Enter command",
+                            hint = "y to proceed, -N to remove, +path to add, q to quit",
+                        ),
+                    )
+                    ?.trim() ?: ""
 
             when {
                 // Proceed
@@ -311,7 +388,8 @@ class Docutilians : CliktCommand() {
 
                 // Remove file by number
                 input.startsWith("-") && input.length > 1 -> {
-                    val numbers = input.drop(1).split(",", " ").mapNotNull { it.trim().toIntOrNull() }
+                    val numbers =
+                        input.drop(1).split(",", " ").mapNotNull { it.trim().toIntOrNull() }
                     if (numbers.isEmpty()) {
                         t.println(Colors.error("Invalid format. Use -N (e.g., -1 or -1,2,3)"))
                         continue
@@ -350,21 +428,23 @@ class Docutilians : CliktCommand() {
                         continue
                     }
 
-                    val content = try {
-                        file.readText()
-                    } catch (e: Exception) {
-                        t.println(Colors.error("  Cannot read file: ${e.message}"))
-                        continue
-                    }
+                    val content =
+                        try {
+                            file.readText()
+                        } catch (e: Exception) {
+                            t.println(Colors.error("  Cannot read file: ${e.message}"))
+                            continue
+                        }
 
-                    val newFile = ScannedFile(
-                        absolutePath = file.absolutePath,
-                        relativePath = path,
-                        content = content,
-                        language = file.extension,
-                        estimatedEndpoints = 0,
-                        framework = null,
-                    )
+                    val newFile =
+                        ScannedFile(
+                            absolutePath = file.absolutePath,
+                            relativePath = path,
+                            content = content,
+                            language = file.extension,
+                            estimatedEndpoints = 0,
+                            framework = null,
+                        )
                     selectedFiles.add(newFile)
                     t.println(Colors.success("  ✓ Added: $path"))
                 }

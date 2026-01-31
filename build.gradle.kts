@@ -30,6 +30,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
     implementation("com.google.guava:guava:32.1.3-jre")
     implementation("io.swagger.parser.v3:swagger-parser:2.1.22")
+    implementation("com.google.code.gson:gson:2.10.1")
 
     // Tree Sitter
     implementation("io.github.bonede:tree-sitter:0.25.3")
