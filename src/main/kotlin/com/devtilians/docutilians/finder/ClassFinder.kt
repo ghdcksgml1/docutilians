@@ -111,7 +111,12 @@ abstract class ClassFinder {
     protected abstract fun findDeclarationName(node: TSNode, source: String): String?
 
     protected fun extractNodeText(source: String, node: TSNode): String {
-        return source.substring(node.startByte, node.endByte)
+        val bytes = source.toByteArray(Charsets.UTF_8)
+
+        val start = node.startByte.coerceIn(0, bytes.size)
+        val end = node.endByte.coerceIn(start, bytes.size)
+
+        return String(bytes, start, end - start, Charsets.UTF_8)
     }
 
     protected fun findChildByType(node: TSNode, types: Set<String>, source: String): String? {

@@ -161,4 +161,48 @@ class ClassFinderTest {
             assertContains(result.sourceCode, "val name: String")
         }
     }
+
+    @Nested
+    @DisplayName("인코딩 및 특수문자 처리 (멀티바이트 지원)")
+    inner class EncodingTest {
+
+        @Test
+        fun `한글과 이모지가 포함된 주석이 있어도 정확한 코드를 추출한다`() {
+            // given
+            // 💡 핵심: 클래스 정의 앞에 '한글'과 '이모지'를 배치하여
+            //         String length와 Byte length의 차이를 유발시킴
+            val file =
+                createFile(
+                    "Korean.kt",
+                    """
+                    package com.example
+
+                    // 🛑 주의: 이곳에는 한글 주석이 있습니다.
+                    // Tree-sitter는 이것을 바이트로 계산하고, String은 글자수로 계산합니다.
+                    // 🚀 이모지도 4바이트를 차지합니다.
+
+                    class KoreanClass(
+                        val message: String = "안녕하세요"
+                    )
+                    """
+                        .trimIndent(),
+                )
+
+            // when
+            val result = finder.findClassByName(file, "KoreanClass")
+
+            // then
+            assertNotNull(result, "클래스를 찾지 못했습니다.")
+            assertEquals("KoreanClass", result.className)
+
+            // 만약 바이트 처리가 안 되었다면 여기서 IndexOutOfBoundsException이 발생하거나
+            // 엉뚱한 문자열("ss KoreanCl" 등)이 잘려서 나옵니다.
+            assertTrue(
+                result.sourceCode.startsWith("class KoreanClass"),
+                "추출된 소스코드의 시작이 올바르지 않습니다. (추출된 값: ${result.sourceCode.take(20)}...)",
+            )
+
+            assertContains(result.sourceCode, "val message: String")
+        }
+    }
 }
