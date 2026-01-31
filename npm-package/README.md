@@ -64,7 +64,8 @@ docutilians ./target-project -o ./docs/openapi -m claude-sonnet-4-5 -k sk-claude
 | `-o, --openapi-output` | Output directory for generated files                   | `.docutilians/openapi`  |
 | `-l, --language`       | Language for prompts (`EN`, `KO`)                      | `EN`                    |
 
-![result.png](assets/result.png)
+![result1.png](assets/result1.png)
+![result2.png](assets/result2.png)
 
 ## 🔄 How it Works
 
