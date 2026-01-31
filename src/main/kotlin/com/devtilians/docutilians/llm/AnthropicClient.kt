@@ -186,7 +186,14 @@ class AnthropicClient(
             return null
         }
 
-        return OpenApi(yaml = stripCodeBlock(openApiYaml.toString()))
+        val cleanedYaml = stripCodeBlock(openApiYaml.toString())
+
+        // Validate response is actual YAML, not markdown explanation
+        if (!isValidYamlResponse(cleanedYaml)) {
+            throw OpenApiYamlParsedException("LLM returned invalid YAML format (possibly markdown)")
+        }
+
+        return OpenApi(yaml = cleanedYaml)
     }
 
     override suspend fun aggregateOpenApiYamls(prompt: Prompt, useCacheControl: Boolean): OpenApi? {
@@ -212,9 +219,31 @@ class AnthropicClient(
         return response
             .trim()
             .removePrefix("```yaml")
+            .removePrefix("```yml")
             .removePrefix("```")
             .removeSuffix("```")
             .trim()
+    }
+
+    /**
+     * Validates that response is valid OpenAPI YAML, not markdown or plain text
+     */
+    private fun isValidYamlResponse(content: String): Boolean {
+        val trimmed = content.trim()
+
+        // Must start with valid YAML key
+        val validStarts = listOf("paths:", "schemas:", "openapi:", "info:", "components:")
+        if (!validStarts.any { trimmed.startsWith(it) }) {
+            return false
+        }
+
+        // Should not contain markdown patterns (LLM sometimes outputs explanations)
+        val invalidPatterns = listOf("1. **", "2. **", "# ", "## ", "```", "- **")
+        if (invalidPatterns.any { trimmed.contains(it) }) {
+            return false
+        }
+
+        return true
     }
 
     private fun verifyOpenApi(yaml: String) {

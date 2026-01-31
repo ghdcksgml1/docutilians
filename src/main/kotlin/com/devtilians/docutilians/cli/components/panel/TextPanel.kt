@@ -13,13 +13,17 @@ enum class TruncateSide {
     RIGHT,
 }
 
+/**
+ * CHUCK_UI Text Panel
+ * Simple text display with separator lines (no box frame)
+ */
 data class TextPanelRequest(
     val title: String? = null,
     val content: String,
-    val lineColor: TextStyle = Colors.Raw.primary,
-    val titleColor: TextStyle = Colors.Raw.secondary,
+    val lineColor: TextStyle = Colors.Raw.textMuted,
+    val titleColor: TextStyle = Colors.Raw.primary,
     val contentColor: TextStyle = Colors.Raw.textWhite,
-    val width: Int = 77,
+    val width: Int = 70,
     val truncate: TruncateSide = TruncateSide.RIGHT,
     val ellipsis: String = "...",
 )
@@ -27,30 +31,30 @@ data class TextPanelRequest(
 object TextPanel {
 
     fun of(request: TextPanelRequest): Widget {
-        val line = "═".repeat(request.width)
-
-        val topLine =
-            if (request.title != null) {
-                val titleWithIcon = "🧾 ${request.title}"
-                val padding = (request.width - titleWithIcon.length - 2) / 2
-                "═".repeat(padding) +
-                    " " +
-                    request.titleColor(titleWithIcon) +
-                    " " +
-                    "═".repeat(padding)
-            } else {
-                line
-            }
-
-        val truncatedContent =
-            request.content.lines().joinToString("\n") {
-                truncateLine(it, request.width, request.truncate, request.ellipsis)
-            }
-
         val output = buildString {
-            appendLine(request.lineColor(topLine))
-            appendLine(request.contentColor(truncatedContent))
-            append(request.lineColor(line))
+            appendLine()
+
+            // Title line
+            if (request.title != null) {
+                appendLine(
+                    "  ${Colors.Raw.primary("◈")} " +
+                        request.titleColor(request.title) +
+                        " ${request.lineColor("─".repeat(maxOf(0, request.width - request.title.length - 5)))}"
+                )
+            } else {
+                appendLine("  ${request.lineColor("─".repeat(request.width))}")
+            }
+
+            appendLine()
+
+            // Content
+            request.content.lines().forEach { line ->
+                val truncated = truncateLine(line, request.width, request.truncate, request.ellipsis)
+                appendLine("  ${request.contentColor(truncated)}")
+            }
+
+            appendLine()
+            append("  ${request.lineColor("─".repeat(request.width))}")
         }
 
         return Text(output)

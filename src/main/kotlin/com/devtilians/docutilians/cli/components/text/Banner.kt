@@ -2,48 +2,32 @@ package com.devtilians.docutilians.cli.components.text
 
 import com.devtilians.docutilians.constants.Colors
 
+/**
+ * CHUCK_UI Cyberpunk Banner
+ * Clean neon aesthetic
+ */
 object Banner {
     fun generate(): String {
-        val primary = Colors.Raw.primary
-        val secondary = Colors.Raw.secondary
-        val accent = Colors.Raw.accent
-        val muted = Colors.Raw.textMuted
-        val success = Colors.Raw.success
+        val cyan = Colors.Raw.primary
+        val pink = Colors.Raw.secondary
+        val dim = Colors.Raw.textMuted
+        val white = Colors.Raw.textWhite
 
-        val logo =
-            """
-            ┌────────────────────────────────────────────────────────────────────────────────────────┐
-            │                                                                                        │
-            │  ██████╗  ██████╗  ██████╗██╗   ██╗████████╗██╗██╗     ██╗ █████╗ ███╗   ██╗███████╗   │
-            │  ██╔══██╗██╔═══██╗██╔════╝██║   ██║╚══██╔══╝██║██║     ██║██╔══██╗████╗  ██║██╔════╝   │
-            │  ██║  ██║██║   ██║██║     ██║   ██║   ██║   ██║██║     ██║███████║██╔██╗ ██║███████╗   │
-            │  ██║  ██║██║   ██║██║     ██║   ██║   ██║   ██║██║     ██║██╔══██║██║╚██╗██║╚════██║   │
-            │  ██████╔╝╚██████╔╝╚██████╗╚██████╔╝   ██║   ██║███████╗██║██║  ██║██║ ╚████║███████║   │
-            │  ╚═════╝  ╚═════╝  ╚═════╝ ╚═════╝    ╚═╝   ╚═╝╚══════╝╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝   │
-            │                                                                                        │
-            │                      Auto-generate OpenAPI specs from source code                      │
-            │                                                                                        │
-            └────────────────────────────────────────────────────────────────────────────────────────┘
-            """
-                .trimIndent()
-
-        return logo
-            .replace("█", primary("█"))
-            .replace("╔", primary("╔"))
-            .replace("╗", primary("╗"))
-            .replace("╚", primary("╚"))
-            .replace("╝", primary("╝"))
-            .replace("═", primary("═"))
-            .replace("║", primary("║"))
-            .replace("┌", muted("┌"))
-            .replace("┐", muted("┐"))
-            .replace("└", muted("└"))
-            .replace("┘", muted("┘"))
-            .replace("─", muted("─"))
-            .replace("│", muted("│"))
-            .replace(
-                "Auto-generate OpenAPI specs from source code",
-                secondary("Auto-generate OpenAPI specs from source code"),
-            )
+        return buildString {
+            appendLine()
+            appendLine(dim("  ${"─".repeat(70)}"))
+            appendLine()
+            appendLine("  ${cyan("██████╗  ██████╗  ██████╗██╗   ██╗████████╗██╗██╗     ██╗ █████╗ ███╗   ██╗███████╗")}")
+            appendLine("  ${cyan("██╔══██╗██╔═══██╗██╔════╝██║   ██║╚══██╔══╝██║██║     ██║██╔══██╗████╗  ██║██╔════╝")}")
+            appendLine("  ${pink("██║  ██║██║   ██║██║     ██║   ██║   ██║   ██║██║     ██║███████║██╔██╗ ██║███████╗")}")
+            appendLine("  ${pink("██║  ██║██║   ██║██║     ██║   ██║   ██║   ██║██║     ██║██╔══██║██║╚██╗██║╚════██║")}")
+            appendLine("  ${cyan("██████╔╝╚██████╔╝╚██████╗╚██████╔╝   ██║   ██║███████╗██║██║  ██║██║ ╚████║███████║")}")
+            appendLine("  ${cyan("╚═════╝  ╚═════╝  ╚═════╝ ╚═════╝    ╚═╝   ╚═╝╚══════╝╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝")}")
+            appendLine()
+            appendLine("  ${white("Auto-generate OpenAPI specs from source code")}")
+            appendLine("  ${dim("LLM-Powered Multi-Agent Pipeline")}")
+            appendLine()
+            append(dim("  ${"─".repeat(70)}"))
+        }
     }
 }

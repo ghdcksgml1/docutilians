@@ -3,93 +3,97 @@ package com.devtilians.docutilians.constants
 import com.github.ajalt.mordant.rendering.TextColors
 import com.github.ajalt.mordant.rendering.TextStyle
 
-/** Docutilians CLI Color System */
+/**
+ * CHUCK_UI Design System - Cyberpunk Neon Color Palette
+ *
+ * Glassmorphism + Neon Glow aesthetic for high-tech CLI interface
+ */
 object Colors {
     // ============================================
-    // Primary Colors
+    // Neon Accent Colors (CHUCK_UI Core)
     // ============================================
 
-    /** Primary Purple - 주요 브랜드 컬러 */
-    val primary: TextStyle = TextColors.rgb("#8b5cf6")
+    /** Neon Blue - Primary info, borders, titles */
+    val primary: TextStyle = TextColors.rgb("#00f3ff")
 
-    /** Secondary Cyan - 보조 브랜드 컬러 */
-    val secondary: TextStyle = TextColors.rgb("#06b6d4")
+    /** Neon Pink - Alert, emphasis, active state */
+    val secondary: TextStyle = TextColors.rgb("#bc13fe")
 
-    /** Accent Electric Blue - 강조 컬러 */
-    val accent: TextStyle = TextColors.rgb("#3b82f6")
-
-    // ============================================
-    // Status Colors
-    // ============================================
-
-    /** Success Green - 성공 상태 */
-    val success: TextStyle = TextColors.rgb("#10b981")
-
-    /** Warning Amber - 경고 상태 */
-    val warning: TextStyle = TextColors.rgb("#f59e0b")
-
-    /** Error Red - 오류 상태 */
-    val error: TextStyle = TextColors.rgb("#ef4444")
-
-    /** Error Bright - 강조 오류 (테두리 등) */
-    val errorBright: TextStyle = TextColors.rgb("#f87171")
-
-    /** Info Cyan - 정보 상태 */
-    val info: TextStyle = TextColors.rgb("#06b6d4")
+    /** Neon Cyan - Accent highlights */
+    val accent: TextStyle = TextColors.rgb("#00f3ff")
 
     // ============================================
-    // Text Colors
+    // Status Colors (Cyberpunk Neon)
     // ============================================
 
-    /** Text Primary - 주요 텍스트 (밝은 흰색) */
-    val textPrimary: TextStyle = TextColors.rgb("#f9fafb")
+    /** Neon Green - Success, positive, online */
+    val success: TextStyle = TextColors.rgb("#0aff0a")
 
-    /** Text Secondary - 보조 텍스트 */
-    val textSecondary: TextStyle = TextColors.rgb("#9ca3af")
+    /** Neon Yellow - Warning, attention needed */
+    val warning: TextStyle = TextColors.rgb("#fefe00")
 
-    /** Text Muted - 비활성 텍스트 */
-    val textMuted: TextStyle = TextColors.rgb("#6b7280")
+    /** Neon Red - Error, critical alert */
+    val error: TextStyle = TextColors.rgb("#ff0055")
 
-    /** Text White - 순수 흰색 */
-    val textWhite: TextStyle = TextColors.rgb("#ffffff")
+    /** Error Bright - Glow effect for errors */
+    val errorBright: TextStyle = TextColors.rgb("#ff3377")
 
-    /** Text Black - 순수 검정 */
-    val textBlack: TextStyle = TextColors.rgb("#000000")
-
-    // ============================================
-    // Border / Panel Colors
-    // ============================================
-
-    /** Border Primary - 기본 테두리 (보라색) */
-    val borderPrimary: TextStyle = TextColors.rgb("#8b5cf6")
-
-    /** Border Secondary - 보조 테두리 (시안) */
-    val borderSecondary: TextStyle = TextColors.rgb("#06b6d4")
-
-    /** Border Accent - 강조 테두리 */
-    val borderAccent: TextStyle = TextColors.rgb("#7c3aed")
-
-    /** Border Muted - 약한 테두리 */
-    val borderMuted: TextStyle = TextColors.rgb("#4b5563")
+    /** Info Cyan - Information state */
+    val info: TextStyle = TextColors.rgb("#00f3ff")
 
     // ============================================
-    // Table Colors
+    // Text Colors (Dark Theme Optimized)
     // ============================================
 
-    /** Table Border - 테이블 테두리 */
-    val tableBorder: TextStyle = TextColors.rgb("#7c3aed")
+    /** Text Primary - Main body text */
+    val textPrimary: TextStyle = TextColors.rgb("#e0e0e0")
 
-    /** Table Header Background - 테이블 헤더 배경 */
-    val tableHeaderBg: TextStyle = TextColors.rgb("#06b6d4")
+    /** Text Secondary - Supporting text */
+    val textSecondary: TextStyle = TextColors.rgb("#a0a0b0")
 
-    /** Table Header Text - 테이블 헤더 텍스트 */
-    val tableHeaderText: TextStyle = TextColors.rgb("#000000")
+    /** Text Muted - Captions, labels, inactive */
+    val textMuted: TextStyle = TextColors.rgb("#8888aa")
 
-    /** Table Footer - 테이블 푸터 */
-    val tableFooter: TextStyle = TextColors.rgb("#f9fafb")
+    /** Text White - High contrast text */
+    val textWhite: TextStyle = TextColors.rgb("#f0f0f5")
 
-    /** Table Cell Muted - 테이블 셀 (약한) */
-    val tableCellMuted: TextStyle = TextColors.rgb("#9ca3af")
+    /** Text Black - Dark text on bright backgrounds */
+    val textBlack: TextStyle = TextColors.rgb("#050510")
+
+    // ============================================
+    // Border / Panel Colors (Glass Effect)
+    // ============================================
+
+    /** Border Primary - Neon blue glow border */
+    val borderPrimary: TextStyle = TextColors.rgb("#00f3ff")
+
+    /** Border Secondary - Neon pink glow border */
+    val borderSecondary: TextStyle = TextColors.rgb("#bc13fe")
+
+    /** Border Accent - Bright cyan accent */
+    val borderAccent: TextStyle = TextColors.rgb("#00ccff")
+
+    /** Border Muted - Subtle dark border */
+    val borderMuted: TextStyle = TextColors.rgb("#3a3a5a")
+
+    // ============================================
+    // Table Colors (Cyberpunk Data Grid)
+    // ============================================
+
+    /** Table Border - Neon frame */
+    val tableBorder: TextStyle = TextColors.rgb("#00f3ff")
+
+    /** Table Header Background - Dark with glow */
+    val tableHeaderBg: TextStyle = TextColors.rgb("#bc13fe")
+
+    /** Table Header Text - High contrast */
+    val tableHeaderText: TextStyle = TextColors.rgb("#050510")
+
+    /** Table Footer - Bright accent */
+    val tableFooter: TextStyle = TextColors.rgb("#00f3ff")
+
+    /** Table Cell Muted - Dim data cells */
+    val tableCellMuted: TextStyle = TextColors.rgb("#8888aa")
 
     // ============================================
     // Semantic Aliases (용도별 별칭)
@@ -102,22 +106,35 @@ object Colors {
     val hint: TextStyle = textMuted
 
     // ============================================
-    // TextColors 버전 (Panel borderStyle 등에서 필요)
+    // Raw TextColors (Panel borderStyle 등에서 필요)
     // ============================================
 
     object Raw {
-        val primary: TextStyle = TextColors.rgb("#8b5cf6")
-        val secondary: TextStyle = TextColors.rgb("#06b6d4")
-        val accent: TextStyle = TextColors.rgb("#3b82f6")
-        val error: TextStyle = TextColors.rgb("#ef4444")
-        val errorBright: TextStyle = TextColors.rgb("#f87171")
-        val warning: TextStyle = TextColors.rgb("#f59e0b")
-        val success: TextStyle = TextColors.rgb("#10b981")
-        val textWhite: TextStyle = TextColors.rgb("#ffffff")
-        val textMuted: TextStyle = TextColors.rgb("#6b7280")
-        val borderPrimary: TextStyle = TextColors.rgb("#8b5cf6")
-        val borderAccent: TextStyle = TextColors.rgb("#7c3aed")
-        val tableBorder: TextStyle = TextColors.rgb("#7c3aed")
-        val tableHeaderBg: TextStyle = TextColors.rgb("#06b6d4")
+        /** Neon Blue - Primary */
+        val primary: TextStyle = TextColors.rgb("#00f3ff")
+        /** Neon Pink - Secondary */
+        val secondary: TextStyle = TextColors.rgb("#bc13fe")
+        /** Neon Cyan - Accent */
+        val accent: TextStyle = TextColors.rgb("#00ccff")
+        /** Neon Red - Error */
+        val error: TextStyle = TextColors.rgb("#ff0055")
+        /** Error Glow */
+        val errorBright: TextStyle = TextColors.rgb("#ff3377")
+        /** Neon Yellow - Warning */
+        val warning: TextStyle = TextColors.rgb("#fefe00")
+        /** Neon Green - Success */
+        val success: TextStyle = TextColors.rgb("#0aff0a")
+        /** Text White */
+        val textWhite: TextStyle = TextColors.rgb("#e0e0e0")
+        /** Text Muted */
+        val textMuted: TextStyle = TextColors.rgb("#8888aa")
+        /** Border Primary - Neon Blue */
+        val borderPrimary: TextStyle = TextColors.rgb("#00f3ff")
+        /** Border Accent - Pink */
+        val borderAccent: TextStyle = TextColors.rgb("#bc13fe")
+        /** Table Border - Neon Blue */
+        val tableBorder: TextStyle = TextColors.rgb("#00f3ff")
+        /** Table Header - Neon Pink */
+        val tableHeaderBg: TextStyle = TextColors.rgb("#bc13fe")
     }
 }

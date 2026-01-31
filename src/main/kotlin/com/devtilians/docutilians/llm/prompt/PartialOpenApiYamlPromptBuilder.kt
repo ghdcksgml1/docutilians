@@ -79,6 +79,31 @@ private val PARTIAL_OPENAPI_YAML_EN_SYSTEM_PROMPT =
     - Write descriptions in detail
     - Output pure YAML only (no backticks, no explanations)
 
+    ## YAML Syntax Rules (CRITICAL)
+
+    You MUST follow these YAML syntax rules strictly:
+
+    1. **Indentation**: Use exactly 2 spaces. NEVER use tabs.
+    2. **Colon spacing**: Always add a space after colon. `key: value` NOT `key:value`
+    3. **String quoting**: Use single quotes for these cases:
+       - Values starting with special chars: `@`, `#`, `*`, `&`, `!`, `|`, `>`, `'`, `"`, `%`, `@`, `` ` ``
+       - Values containing `:` followed by space
+       - Empty strings: `''`
+       - Boolean-like strings: `'true'`, `'false'`, `'yes'`, `'no'`
+    4. **${'$'}ref syntax**: Always quote the reference path:
+       ```
+       ${'$'}ref: '#/components/schemas/MySchema'
+       ```
+    5. **Multiline strings**: Use `|` for literal blocks:
+       ```
+       description: |
+         Line 1
+         Line 2
+       ```
+    6. **Special characters in descriptions**: Escape or quote strings containing `#`, `:`, `{`, `}`
+    7. **Array items**: Each item starts with `- ` (dash + space)
+    8. **Numeric strings**: Quote version numbers: `'3.0.0'` not `3.0.0`
+
     ## Output Format Example
 
     **Controller:**
@@ -358,6 +383,16 @@ private val PARTIAL_OPENAPI_YAML_EN_SYSTEM_PROMPT =
     - Code blocks wrapped in backticks
 
     Allowed output: Pure YAML only (without backticks)
+
+    ## Pre-output Checklist
+
+    Before outputting, verify:
+    - [ ] All indentation uses 2 spaces (no tabs)
+    - [ ] Every colon has a space after it
+    - [ ] All ${'$'}ref values are quoted: `'#/components/schemas/...'`
+    - [ ] Special characters in strings are properly quoted
+    - [ ] No trailing whitespace on lines
+    - [ ] description fields use `|` for multiline
     """
         .trimIndent()
 
@@ -373,6 +408,31 @@ private val PARTIAL_OPENAPI_YAML_KO_SYSTEM_PROMPT =
     - 모든 타입 정보가 이미 제공됨
     - description 상세히 작성
     - 순수 YAML만 출력 (백틱, 설명 금지)
+
+    ## YAML 문법 규칙 (필수 준수)
+
+    다음 YAML 문법 규칙을 반드시 따르세요:
+
+    1. **들여쓰기**: 정확히 2칸 공백. 탭 절대 금지.
+    2. **콜론 뒤 공백**: 항상 콜론 뒤에 공백. `key: value` (O) `key:value` (X)
+    3. **문자열 따옴표**: 다음 경우 작은따옴표 사용:
+       - 특수문자로 시작: `@`, `#`, `*`, `&`, `!`, `|`, `>`, `'`, `"`, `%`
+       - 콜론+공백 포함된 값
+       - 빈 문자열: `''`
+       - Boolean처럼 보이는 문자열: `'true'`, `'false'`, `'yes'`, `'no'`
+    4. **${'$'}ref 문법**: 참조 경로는 항상 따옴표로 감싸기:
+       ```
+       ${'$'}ref: '#/components/schemas/MySchema'
+       ```
+    5. **여러 줄 문자열**: `|` 사용:
+       ```
+       description: |
+         첫 번째 줄
+         두 번째 줄
+       ```
+    6. **description 내 특수문자**: `#`, `:`, `{`, `}` 포함 시 따옴표 또는 이스케이프
+    7. **배열 항목**: 각 항목은 `- ` (대시 + 공백)으로 시작
+    8. **숫자형 문자열**: 버전 번호는 따옴표: `'3.0.0'`
 
     ## 출력 형식 예제
 
@@ -653,5 +713,15 @@ private val PARTIAL_OPENAPI_YAML_KO_SYSTEM_PROMPT =
     - 백틱으로 감싼 코드블록
 
     허용 출력: 순수 YAML만 (백틱 없이)
+
+    ## 출력 전 체크리스트
+
+    출력 전 확인:
+    - [ ] 모든 들여쓰기가 2칸 공백 (탭 없음)
+    - [ ] 모든 콜론 뒤에 공백 있음
+    - [ ] 모든 ${'$'}ref 값이 따옴표로 감싸져 있음: `'#/components/schemas/...'`
+    - [ ] 문자열 내 특수문자가 적절히 따옴표 처리됨
+    - [ ] 줄 끝에 불필요한 공백 없음
+    - [ ] description 필드는 여러 줄일 때 `|` 사용
     """
         .trimIndent()

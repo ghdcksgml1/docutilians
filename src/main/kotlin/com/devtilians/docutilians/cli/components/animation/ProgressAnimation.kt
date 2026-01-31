@@ -30,61 +30,68 @@ class ProgressAnimation(private val t: Terminal, private val config: Config) {
 
     private val animation: Animation<ProgressState> =
         t.textAnimation { state ->
-            val progress =
-                "[${"█".repeat(state.current)}${"░".repeat(state.total - state.current)}]"
+            val filled = "█".repeat(state.current)
+            val empty = "░".repeat(state.total - state.current)
+            val progress = "[$filled$empty]"
             val percent = if (state.total > 0) (state.current * 100 / state.total) else 0
 
             buildString {
-                appendLine(Colors.Raw.primary("─".repeat(60)))
-                appendLine("${Colors.Raw.secondary(state.spinner)} ${state.status}")
+                appendLine()
+                appendLine(Colors.Raw.textMuted("  ${"─".repeat(60)}"))
+
+                // Status line with spinner
                 appendLine(
-                    "   ${Colors.Raw.textMuted("File:")} ${Colors.Raw.accent(state.fileName)}"
+                    "  ${Colors.Raw.primary(state.spinner)} ${Colors.Raw.textWhite(state.status)}"
                 )
+
+                // File info
+                val fileDisplay = truncatePath(state.fileName, 50)
+                appendLine(
+                    "    ${Colors.Raw.textMuted("◈ TARGET:")} ${Colors.Raw.accent(fileDisplay)}"
+                )
+
                 appendLine()
 
-                // 로그 표시 영역
+                // Log display area
                 if (state.logs.isNotEmpty()) {
                     state.logs.forEach { log ->
-                        appendLine("   ${Colors.Raw.textMuted("→")} ${Colors.Raw.textMuted(log)}")
+                        val logDisplay = if (log.length > 55) log.take(52) + "..." else log
+                        appendLine("    ${Colors.Raw.textMuted("▸")} ${Colors.Raw.textMuted(logDisplay)}")
                     }
                     appendLine()
                 }
 
+                // Progress bar
                 appendLine(
-                    "   ${Colors.Raw.primary(progress)} ${percent}% (${state.current}/${state.total})"
+                    "  ${Colors.Raw.primary(progress)} ${Colors.Raw.textWhite("$percent%")} " +
+                        Colors.Raw.textMuted("(${state.current}/${state.total})")
                 )
+
                 appendLine()
+
+                // Success/Fail counters
                 appendLine(
-                    "   ${Colors.Raw.success("✓ ${state.success}")}  ${Colors.Raw.error("✗ ${state.fail}")}"
+                    "  ${Colors.Raw.success("▲ ${state.success}")} " +
+                        "${Colors.Raw.error("▼ ${state.fail}")}  " +
+                        formatTokenUsage(GlobalState.tokenUsage)
                 )
-                appendLine()
-                append(formatTokenUsage(GlobalState.tokenUsage)) // GlobalState에서 직접 참조
-                appendLine()
-                append(Colors.Raw.primary("─".repeat(60)))
+
+                append(Colors.Raw.textMuted("  ${"─".repeat(60)}"))
             }
         }
 
     private fun formatTokenUsage(usage: TokenUsage): String {
         val input = formatNumber(usage.inputTokens)
         val output = formatNumber(usage.outputTokens)
-        val cached = formatNumber(usage.cachedTokens)
-        val cost = String.format("%.2f", usage.dollarCost)
-
-        val content = buildString {
-            append("[Input: $input] [Output: $output]")
-            if (usage.cachedTokens > 0) append(" [Cache: $cached]")
-            append(" [\$$cost]")
-        }
-
-        val width = maxOf(content.length + 4, 40)
-        val padding = width - content.length - 4
+        val cost = String.format("%.4f", usage.dollarCost)
 
         return buildString {
-            appendLine("   ${Colors.Raw.textMuted("┌─ Token Usage ─${"─".repeat(width - 17)}┐")}")
-            appendLine(
-                "   ${Colors.Raw.textMuted("│")} $content${" ".repeat(padding)} ${Colors.Raw.textMuted("│")}"
-            )
-            append("   ${Colors.Raw.textMuted("└${"─".repeat(width - 2)}┘")}")
+            append(Colors.Raw.textMuted("IN:"))
+            append(Colors.Raw.accent(" $input"))
+            append(Colors.Raw.textMuted("  OUT:"))
+            append(Colors.Raw.accent(" $output"))
+            append(Colors.Raw.textMuted("  \$"))
+            append(Colors.Raw.warning(cost))
         }
     }
 

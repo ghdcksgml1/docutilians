@@ -1,3 +1,5 @@
 package com.devtilians.docutilians.exceptions
 
-class OpenApiYamlParsedException : RuntimeException("Failed to parse yaml.") {}
+class OpenApiYamlParsedException(
+    message: String = "Failed to parse yaml."
+) : RuntimeException(message)
