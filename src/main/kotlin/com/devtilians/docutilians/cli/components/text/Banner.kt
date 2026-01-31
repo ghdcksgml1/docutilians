@@ -4,55 +4,30 @@ import com.devtilians.docutilians.constants.Colors
 
 /**
  * CHUCK_UI Cyberpunk Banner
- * Neon glow aesthetic with glassmorphism-inspired frame
+ * Clean neon aesthetic
  */
 object Banner {
     fun generate(): String {
-        val neonBlue = Colors.Raw.primary      // #00f3ff - Neon Cyan
-        val neonPink = Colors.Raw.secondary    // #bc13fe - Neon Pink
-        val dim = Colors.Raw.textMuted         // #8888aa - Dim text
+        val cyan = Colors.Raw.primary
+        val pink = Colors.Raw.secondary
+        val dim = Colors.Raw.textMuted
+        val white = Colors.Raw.textWhite
 
-        val logo =
-            """
-            ╔══════════════════════════════════════════════════════════════════════════════════════╗
-            ║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
-            ║  ▓                                                                                ▓  ║
-            ║  ▓   ██████╗  ██████╗  ██████╗██╗   ██╗████████╗██╗██╗     ██╗ █████╗ ███╗   ██╗███████╗  ▓  ║
-            ║  ▓   ██╔══██╗██╔═══██╗██╔════╝██║   ██║╚══██╔══╝██║██║     ██║██╔══██╗████╗  ██║██╔════╝  ▓  ║
-            ║  ▓   ██║  ██║██║   ██║██║     ██║   ██║   ██║   ██║██║     ██║███████║██╔██╗ ██║███████╗  ▓  ║
-            ║  ▓   ██║  ██║██║   ██║██║     ██║   ██║   ██║   ██║██║     ██║██╔══██║██║╚██╗██║╚════██║  ▓  ║
-            ║  ▓   ██████╔╝╚██████╔╝╚██████╗╚██████╔╝   ██║   ██║███████╗██║██║  ██║██║ ╚████║███████║  ▓  ║
-            ║  ▓   ╚═════╝  ╚═════╝  ╚═════╝ ╚═════╝    ╚═╝   ╚═╝╚══════╝╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝  ▓  ║
-            ║  ▓                                                                                ▓  ║
-            ║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
-            ║                                                                                      ║
-            ║              ⚡ Auto-generate OpenAPI specs from source code ⚡                      ║
-            ║                          [ LLM-Powered Multi-Agent Pipeline ]                        ║
-            ║                                                                                      ║
-            ╚══════════════════════════════════════════════════════════════════════════════════════╝
-            """
-                .trimIndent()
-
-        return logo
-            // Main logo text - Neon Blue glow
-            .replace("█", neonBlue("█"))
-            .replace("╔", neonBlue("╔"))
-            .replace("╗", neonBlue("╗"))
-            .replace("╚", neonBlue("╚"))
-            .replace("╝", neonBlue("╝"))
-            // Outer frame - Neon Pink accent
-            .replace("═", neonPink("═"))
-            .replace("║", neonPink("║"))
-            // Glass panel effect
-            .replace("▓", dim("▓"))
-            // Tagline highlight
-            .replace(
-                "⚡ Auto-generate OpenAPI specs from source code ⚡",
-                neonBlue("⚡ Auto-generate OpenAPI specs from source code ⚡"),
-            )
-            .replace(
-                "[ LLM-Powered Multi-Agent Pipeline ]",
-                dim("[ LLM-Powered Multi-Agent Pipeline ]"),
-            )
+        return buildString {
+            appendLine()
+            appendLine(dim("  ${"─".repeat(70)}"))
+            appendLine()
+            appendLine("  ${cyan("██████╗  ██████╗  ██████╗██╗   ██╗████████╗██╗██╗     ██╗ █████╗ ███╗   ██╗███████╗")}")
+            appendLine("  ${cyan("██╔══██╗██╔═══██╗██╔════╝██║   ██║╚══██╔══╝██║██║     ██║██╔══██╗████╗  ██║██╔════╝")}")
+            appendLine("  ${pink("██║  ██║██║   ██║██║     ██║   ██║   ██║   ██║██║     ██║███████║██╔██╗ ██║███████╗")}")
+            appendLine("  ${pink("██║  ██║██║   ██║██║     ██║   ██║   ██║   ██║██║     ██║██╔══██║██║╚██╗██║╚════██║")}")
+            appendLine("  ${cyan("██████╔╝╚██████╔╝╚██████╗╚██████╔╝   ██║   ██║███████╗██║██║  ██║██║ ╚████║███████║")}")
+            appendLine("  ${cyan("╚═════╝  ╚═════╝  ╚═════╝ ╚═════╝    ╚═╝   ╚═╝╚══════╝╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝")}")
+            appendLine()
+            appendLine("  ${white("Auto-generate OpenAPI specs from source code")}")
+            appendLine("  ${dim("LLM-Powered Multi-Agent Pipeline")}")
+            appendLine()
+            append(dim("  ${"─".repeat(70)}"))
+        }
     }
 }

@@ -4,13 +4,51 @@ import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
 
 object OpenApiMerger {
+
+    /**
+     * Validates if content looks like valid OpenAPI YAML
+     */
+    private fun isValidOpenApiYaml(content: String): Boolean {
+        val trimmed = content.trim()
+
+        // Must start with valid YAML key (paths:, schemas:, openapi:, etc.)
+        val validStarts = listOf("paths:", "schemas:", "openapi:", "info:", "components:")
+        if (!validStarts.any { trimmed.startsWith(it) }) {
+            return false
+        }
+
+        // Should not contain markdown patterns
+        val invalidPatterns = listOf(
+            Regex("""^\d+\.\s+\*\*""", RegexOption.MULTILINE),  // 1. **filename**
+            Regex("""^#+\s+""", RegexOption.MULTILINE),         // # Header
+            Regex("""^-\s+\*\*""", RegexOption.MULTILINE),      // - **item**
+            Regex("""```"""),                                    // code blocks
+        )
+        if (invalidPatterns.any { it.containsMatchIn(trimmed) }) {
+            return false
+        }
+
+        return true
+    }
+
     fun mergeOpenApiYamls(yamls: List<String>, title: String, version: String): String {
         val yaml = Yaml()
         val allPaths = sortedMapOf<String, Any>()
         val allSchemas = sortedMapOf<String, Any>()
 
         yamls.forEach { content ->
-            val parsed = yaml.load<Map<String, Any>>(content) ?: return@forEach
+            // Skip invalid YAML content
+            if (!isValidOpenApiYaml(content)) {
+                println("[WARN] Skipping invalid YAML content: ${content.take(50)}...")
+                return@forEach
+            }
+
+            val parsed = runCatching {
+                yaml.load<Map<String, Any>>(content)
+            }.getOrElse { e ->
+                println("[WARN] Failed to parse YAML: ${e.message}")
+                null
+            } ?: return@forEach
 
             (parsed["paths"] as? Map<String, Any>)?.forEach { (path, methods) ->
                 allPaths.merge(path, methods) { old, new ->

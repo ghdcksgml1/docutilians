@@ -1,16 +1,10 @@
 package com.devtilians.docutilians.cli.components.table
 
 import com.devtilians.docutilians.constants.Colors
-import com.github.ajalt.mordant.rendering.BorderType.Companion.SQUARE_DOUBLE_SECTION_SEPARATOR
-import com.github.ajalt.mordant.rendering.TextAlign
 import com.github.ajalt.mordant.rendering.TextColors
 import com.github.ajalt.mordant.rendering.TextStyle
 import com.github.ajalt.mordant.rendering.TextStyles
-import com.github.ajalt.mordant.table.Borders
-import com.github.ajalt.mordant.table.ColumnWidth
-import com.github.ajalt.mordant.table.table
 import com.github.ajalt.mordant.terminal.Terminal
-import com.github.ajalt.mordant.widgets.Padding
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
@@ -21,11 +15,12 @@ import kotlin.math.pow
 
 /**
  * CHUCK_UI File Table
- * Cyberpunk-styled data grid with neon accents
+ * Cyberpunk-styled data grid with neon accents and glassmorphism feel
  */
 class FileTable(private val terminal: Terminal) {
 
     private data class FileRenderItem(
+        val index: Int,
         val name: String,
         val extension: String,
         val size: String,
@@ -34,136 +29,114 @@ class FileTable(private val terminal: Terminal) {
     )
 
     fun render(paths: List<Path>) {
-        val items = paths.map { toRenderItem(it) }
+        val items = paths.mapIndexed { index, path -> toRenderItem(index, path) }
 
+        // Title
+        terminal.println()
         terminal.println(
-            table {
-                borderType = SQUARE_DOUBLE_SECTION_SEPARATOR
-                borderStyle = Colors.Raw.secondary  // Neon Pink border
-                tableBorders = Borders.TOP_BOTTOM
-
-                align = TextAlign.LEFT
-                column(0) { width = ColumnWidth.Auto }
-                column(1) { padding = Padding(0, 2, 0, 2) }
-                column(2) { padding = Padding(0, 2, 0, 2) }
-                column(3) { padding = Padding(0, 2, 0, 2) }
-
-                header {
-                    style = Colors.textBlack + Colors.Raw.primary.bg + TextStyles.bold
-                    row {
-                        cell("  ◈ NAME  ")
-                        cell("EXT") { align = TextAlign.CENTER }
-                        cell("SIZE") { align = TextAlign.RIGHT }
-                        cell("MODIFIED") { align = TextAlign.RIGHT }
-                    }
-                }
-
-                body {
-                    cellBorders = Borders.BOTTOM
-
-                    items.forEach { item ->
-                        val (icon, colorStyle) = getStyleForExtension(item.extension, item.isDir)
-
-                        row {
-                            // Column 1: File name
-                            cell(" $icon  ${item.name}") {
-                                style = colorStyle + TextStyles.bold
-                                if (item.isDir) style = style!! + TextStyles.underline
-                            }
-
-                            // Column 2: Extension
-                            cell(item.extension.uppercase()) {
-                                align = TextAlign.CENTER
-                                style = colorStyle
-                            }
-
-                            // Column 3: Size
-                            cell(item.size) {
-                                align = TextAlign.RIGHT
-                                style = Colors.tableCellMuted
-                            }
-
-                            // Column 4: Date
-                            cell(item.date) {
-                                align = TextAlign.RIGHT
-                                style = Colors.tableCellMuted
-                            }
-                        }
-                    }
-                }
-
-                footer {
-                    style = Colors.Raw.primary + TextStyles.bold  // Neon Blue footer
-                    row {
-                        cell("  ▲ TOTAL: ${items.size} FILES  ") {
-                            columnSpan = 4
-                            align = TextAlign.RIGHT
-                        }
-                    }
-                }
-            }
+            "  ${Colors.Raw.primary("◈")} ${Colors.Raw.textWhite("FILE SCANNER")} " +
+                "${Colors.Raw.textMuted("─────────────────────────────────────────────────")}"
         )
+        terminal.println()
+
+        // Header
+        terminal.println(
+            "  ${Colors.Raw.textMuted("#")}   " +
+                "${Colors.Raw.primary("FILE")}${" ".repeat(36)}" +
+                "${Colors.Raw.textMuted("TYPE")}      " +
+                "${Colors.Raw.textMuted("SIZE")}        " +
+                "${Colors.Raw.textMuted("MODIFIED")}"
+        )
+        terminal.println(Colors.Raw.textMuted("  ${"─".repeat(75)}"))
+
+        // Body
+        items.forEach { item ->
+            val (icon, colorStyle) = getStyleForExtension(item.extension, item.isDir)
+            val indexStr = Colors.Raw.textMuted(String.format("%02d", item.index + 1))
+            val nameStr = (colorStyle + TextStyles.bold)("$icon ${truncateName(item.name, 35)}")
+            val extStr = formatExtBadge(item.extension, item.isDir)
+            val sizeStr = Colors.Raw.accent(item.size.padStart(8))
+            val dateStr = Colors.Raw.textMuted(item.date)
+
+            terminal.println("  $indexStr  $nameStr  $extStr  $sizeStr    $dateStr")
+        }
+
+        // Footer
+        terminal.println(Colors.Raw.textMuted("  ${"─".repeat(75)}"))
+        terminal.println(
+            "  ${Colors.Raw.primary("▲")} ${Colors.Raw.textWhite("COMPLETE")} " +
+                "${Colors.Raw.success(items.size.toString())} ${Colors.Raw.textMuted("files")}"
+        )
+        terminal.println()
     }
 
-    private fun getStyleForExtension(ext: String, isDir: Boolean): Pair<String, TextStyle> {
-        // CHUCK_UI Cyberpunk color scheme for file types
-        if (isDir) return "▶" to Colors.Raw.primary  // Neon Blue for directories
-
-        return when (ext) {
-            // JVM Ecosystem - Purple/Pink tones
-            "kt" -> "◆" to TextColors.rgb("#bc13fe")  // Kotlin - Neon Pink
-            "java" -> "◆" to TextColors.rgb("#ff6600")  // Java - Neon Orange
-            "gradle" -> "◇" to Colors.Raw.textMuted
-
-            // Web / Node - Cyan/Yellow tones
-            "js" -> "◆" to TextColors.rgb("#fefe00")  // JS - Neon Yellow
-            "ts" -> "◆" to TextColors.rgb("#00f3ff")  // TS - Neon Blue
-            "jsx",
-            "tsx" -> "◆" to TextColors.rgb("#00ccff")  // React - Cyan
-            "html" -> "◇" to TextColors.rgb("#ff5500")  // HTML - Orange
-            "css" -> "◇" to TextColors.rgb("#00f3ff")  // CSS - Neon Blue
-            "vue" -> "◆" to TextColors.rgb("#0aff0a")  // Vue - Neon Green
-
-            // Backend / System
-            "rs" -> "◆" to TextColors.rgb("#ff6633")  // Rust - Orange
-            "go" -> "◆" to TextColors.rgb("#00f3ff")  // Go - Neon Cyan
-            "py" -> "◆" to TextColors.rgb("#fefe00")  // Python - Yellow
-            "c",
-            "cpp",
-            "h" -> "◇" to Colors.Raw.textMuted
-
-            // Config / Data - Accent colors
-            "json" -> "◇" to TextColors.rgb("#fefe00")  // JSON - Yellow
-            "yaml",
-            "yml" -> "◇" to Colors.Raw.primary  // YAML - Neon Blue (primary)
-            "xml" -> "◇" to Colors.Raw.textMuted
-            "md" -> "◇" to Colors.Raw.textWhite
-
-            // Graphics - Pink tones
-            "png",
-            "jpg",
-            "jpeg",
-            "svg",
-            "ico" -> "◇" to TextColors.rgb("#bc13fe")  // Neon Pink
-
-            // Archives - Yellow/Gold
-            "zip",
-            "tar",
-            "gz",
-            "7z" -> "◇" to TextColors.rgb("#fefe00")
-
-            // Default
-            else -> "◇" to Colors.Raw.textMuted
+    private fun truncateName(name: String, maxLen: Int): String {
+        return if (name.length <= maxLen) {
+            name + " ".repeat(maxLen - name.length)
+        } else {
+            name.take(maxLen - 3) + "..."
         }
     }
 
-    private fun toRenderItem(path: Path): FileRenderItem {
+    private fun formatExtBadge(ext: String, isDir: Boolean): String {
+        val label = if (isDir) "DIR" else ext.uppercase()
+        return when {
+            isDir -> Colors.Raw.primary("[$label]")
+            ext in listOf("kt", "java", "ts", "js", "py", "go", "rs") ->
+                Colors.Raw.success("[$label]")
+            ext in listOf("yaml", "yml", "json", "xml") ->
+                Colors.Raw.warning("[$label]")
+            else -> Colors.Raw.textMuted("[$label]")
+        }
+    }
+
+    private fun getStyleForExtension(ext: String, isDir: Boolean): Pair<String, TextStyle> {
+        if (isDir) return "📁" to Colors.Raw.primary
+
+        return when (ext) {
+            // JVM Ecosystem
+            "kt" -> "🟣" to TextColors.rgb("#bc13fe")
+            "java" -> "☕" to TextColors.rgb("#ff6600")
+            "gradle" -> "🐘" to Colors.Raw.textMuted
+
+            // Web / Node
+            "js" -> "⚡" to TextColors.rgb("#fefe00")
+            "ts" -> "💠" to TextColors.rgb("#00f3ff")
+            "jsx", "tsx" -> "⚛️" to TextColors.rgb("#00ccff")
+            "html" -> "🌐" to TextColors.rgb("#ff5500")
+            "css" -> "🎨" to TextColors.rgb("#00f3ff")
+            "vue" -> "💚" to TextColors.rgb("#0aff0a")
+
+            // Backend / System
+            "rs" -> "🦀" to TextColors.rgb("#ff6633")
+            "go" -> "🐹" to TextColors.rgb("#00f3ff")
+            "py" -> "🐍" to TextColors.rgb("#fefe00")
+            "c", "cpp", "h" -> "⚙️" to Colors.Raw.textMuted
+
+            // Config / Data
+            "json" -> "📦" to TextColors.rgb("#fefe00")
+            "yaml", "yml" -> "📋" to Colors.Raw.primary
+            "xml" -> "📄" to Colors.Raw.textMuted
+            "md" -> "📝" to Colors.Raw.textWhite
+
+            // Graphics
+            "png", "jpg", "jpeg", "svg", "ico" -> "🖼️" to TextColors.rgb("#bc13fe")
+
+            // Archives
+            "zip", "tar", "gz", "7z" -> "📦" to TextColors.rgb("#fefe00")
+
+            // Default
+            else -> "📄" to Colors.Raw.textMuted
+        }
+    }
+
+    private fun toRenderItem(index: Int, path: Path): FileRenderItem {
         val fileName = path.fileName.toString()
         val isDir = Files.isDirectory(path)
         val ext = if (isDir) "DIR" else fileName.substringAfterLast('.', "").lowercase()
         val sizeStr = if (isDir) "-" else formatSize(Files.size(path))
         val dateStr = formatDate(Files.getLastModifiedTime(path))
-        return FileRenderItem(fileName, ext, sizeStr, dateStr, isDir)
+        return FileRenderItem(index, fileName, ext, sizeStr, dateStr, isDir)
     }
 
     private fun formatSize(size: Long): String {

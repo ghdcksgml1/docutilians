@@ -30,117 +30,68 @@ class ProgressAnimation(private val t: Terminal, private val config: Config) {
 
     private val animation: Animation<ProgressState> =
         t.textAnimation { state ->
-            // Cyberpunk neon progress bar
-            val filled = "▓".repeat(state.current)
+            val filled = "█".repeat(state.current)
             val empty = "░".repeat(state.total - state.current)
             val progress = "[$filled$empty]"
             val percent = if (state.total > 0) (state.current * 100 / state.total) else 0
 
             buildString {
-                // Top border - Neon Pink glow
-                appendLine(Colors.Raw.secondary("╔${"═".repeat(58)}╗"))
+                appendLine()
+                appendLine(Colors.Raw.textMuted("  ${"─".repeat(60)}"))
 
                 // Status line with spinner
                 appendLine(
-                    Colors.Raw.secondary("║") +
-                        " ${Colors.Raw.primary(state.spinner)} ${Colors.Raw.textWhite(state.status)}" +
-                        " ".repeat(maxOf(0, 56 - state.status.length)) +
-                        Colors.Raw.secondary("║")
+                    "  ${Colors.Raw.primary(state.spinner)} ${Colors.Raw.textWhite(state.status)}"
                 )
 
                 // File info
-                val fileDisplay = truncatePath(state.fileName, 45)
+                val fileDisplay = truncatePath(state.fileName, 50)
                 appendLine(
-                    Colors.Raw.secondary("║") +
-                        "   ${Colors.Raw.textMuted("◈ TARGET:")} ${Colors.Raw.accent(fileDisplay)}" +
-                        " ".repeat(maxOf(0, 44 - fileDisplay.length)) +
-                        Colors.Raw.secondary("║")
+                    "    ${Colors.Raw.textMuted("◈ TARGET:")} ${Colors.Raw.accent(fileDisplay)}"
                 )
 
-                appendLine(Colors.Raw.secondary("╠${"─".repeat(58)}╣"))
+                appendLine()
 
                 // Log display area
                 if (state.logs.isNotEmpty()) {
                     state.logs.forEach { log ->
-                        val logDisplay = if (log.length > 52) log.take(49) + "..." else log
-                        appendLine(
-                            Colors.Raw.secondary("║") +
-                                "   ${Colors.Raw.textMuted("▸")} ${Colors.Raw.textMuted(logDisplay)}" +
-                                " ".repeat(maxOf(0, 53 - logDisplay.length)) +
-                                Colors.Raw.secondary("║")
-                        )
+                        val logDisplay = if (log.length > 55) log.take(52) + "..." else log
+                        appendLine("    ${Colors.Raw.textMuted("▸")} ${Colors.Raw.textMuted(logDisplay)}")
                     }
-                    appendLine(Colors.Raw.secondary("╠${"─".repeat(58)}╣"))
+                    appendLine()
                 }
 
-                // Progress bar - Neon Blue
-                val progressDisplay = "$progress $percent%"
+                // Progress bar
                 appendLine(
-                    Colors.Raw.secondary("║") +
-                        "   ${Colors.Raw.primary(progress)} ${Colors.Raw.textWhite("$percent%")}" +
-                        " (${state.current}/${state.total})" +
-                        " ".repeat(maxOf(0, 35 - state.total.toString().length * 2)) +
-                        Colors.Raw.secondary("║")
+                    "  ${Colors.Raw.primary(progress)} ${Colors.Raw.textWhite("$percent%")} " +
+                        Colors.Raw.textMuted("(${state.current}/${state.total})")
                 )
 
-                appendLine(Colors.Raw.secondary("╠${"─".repeat(58)}╣"))
+                appendLine()
 
                 // Success/Fail counters
                 appendLine(
-                    Colors.Raw.secondary("║") +
-                        "   ${Colors.Raw.success("▲ SUCCESS: ${state.success}")}" +
-                        "  ${Colors.Raw.error("▼ FAILED: ${state.fail}")}" +
-                        " ".repeat(maxOf(0, 30 - state.success.toString().length - state.fail.toString().length)) +
-                        Colors.Raw.secondary("║")
+                    "  ${Colors.Raw.success("▲ ${state.success}")} " +
+                        "${Colors.Raw.error("▼ ${state.fail}")}  " +
+                        formatTokenUsage(GlobalState.tokenUsage)
                 )
 
-                appendLine(Colors.Raw.secondary("╠${"─".repeat(58)}╣"))
-
-                // Token usage panel
-                append(formatTokenUsage(GlobalState.tokenUsage))
-
-                // Bottom border
-                appendLine()
-                append(Colors.Raw.secondary("╚${"═".repeat(58)}╝"))
+                append(Colors.Raw.textMuted("  ${"─".repeat(60)}"))
             }
         }
 
     private fun formatTokenUsage(usage: TokenUsage): String {
         val input = formatNumber(usage.inputTokens)
         val output = formatNumber(usage.outputTokens)
-        val cached = formatNumber(usage.cachedTokens)
         val cost = String.format("%.4f", usage.dollarCost)
 
         return buildString {
-            // Token Usage Header
-            appendLine(
-                Colors.Raw.secondary("║") +
-                    "   ${Colors.Raw.primary("◆ TOKEN USAGE")}" +
-                    " ".repeat(43) +
-                    Colors.Raw.secondary("║")
-            )
-
-            // Input/Output tokens
-            val tokensLine = "${Colors.Raw.textMuted("IN:")} ${Colors.Raw.accent(input)}  " +
-                "${Colors.Raw.textMuted("OUT:")} ${Colors.Raw.accent(output)}"
-            appendLine(
-                Colors.Raw.secondary("║") +
-                    "     $tokensLine" +
-                    " ".repeat(maxOf(0, 35 - input.length - output.length)) +
-                    Colors.Raw.secondary("║")
-            )
-
-            // Cache + Cost
-            val cachePart = if (usage.cachedTokens > 0) {
-                "${Colors.Raw.textMuted("CACHE:")} ${Colors.Raw.success(cached)}  "
-            } else ""
-            val costLine = "$cachePart${Colors.Raw.textMuted("COST:")} ${Colors.Raw.warning("\$$cost")}"
-            append(
-                Colors.Raw.secondary("║") +
-                    "     $costLine" +
-                    " ".repeat(maxOf(0, 35 - cached.length - cost.length)) +
-                    Colors.Raw.secondary("║")
-            )
+            append(Colors.Raw.textMuted("IN:"))
+            append(Colors.Raw.accent(" $input"))
+            append(Colors.Raw.textMuted("  OUT:"))
+            append(Colors.Raw.accent(" $output"))
+            append(Colors.Raw.textMuted("  \$"))
+            append(Colors.Raw.warning(cost))
         }
     }
 

@@ -5,8 +5,10 @@ import com.anthropic.models.messages.Model
 import com.devtilians.docutilians.cli.components.animation.ProgressAnimation
 import com.devtilians.docutilians.cli.components.panel.*
 import com.devtilians.docutilians.cli.components.table.FileTable
+import com.devtilians.docutilians.cli.components.table.ScannedFileTable
 import com.devtilians.docutilians.cli.components.text.Banner
 import com.devtilians.docutilians.common.Config
+import com.devtilians.docutilians.common.GlobalState
 import com.devtilians.docutilians.constants.Colors
 import com.devtilians.docutilians.constants.Language
 import com.devtilians.docutilians.exceptions.ApiKeyNotFoundError
@@ -18,6 +20,7 @@ import com.devtilians.docutilians.llm.prompt.FileCollectPromptBuilder
 import com.devtilians.docutilians.llm.prompt.PartialOpenApiYamlPromptBuilder
 import com.devtilians.docutilians.llm.prompt.PromptBuilder.RouterFileInfo
 import com.devtilians.docutilians.scanner.CodeScanner
+import com.devtilians.docutilians.scanner.CodeScanner.ScannedFile
 import com.devtilians.docutilians.scanner.CodeScanner.ScanResult
 import com.devtilians.docutilians.utils.FileUtils
 import com.devtilians.docutilians.utils.OpenApiMerger
@@ -105,6 +108,9 @@ class Docutilians : CliktCommand() {
                 outputDirPath = openApiYamlOutputDirPath,
                 language = languageEnum,
             )
+
+        // Initialize global state with config
+        GlobalState.initConfig(config)
     }
 
     override fun run() = runBlocking {
@@ -119,7 +125,15 @@ class Docutilians : CliktCommand() {
             }
         val scanResult = scanProjectTargetDir(t, config.projectDirPath)
 
-        val (generatedYamls, progress) = generateFileToOpenApiYaml(t, scanResult)
+        // Show detected files and allow user to modify selection
+        val selectedFiles = selectFilesToProcess(t, scanResult.files)
+
+        if (selectedFiles.isEmpty()) {
+            t.println(Colors.warning("No files selected. Exiting."))
+            return@runBlocking
+        }
+
+        val (generatedYamls, progress) = generateFileToOpenApiYaml(t, selectedFiles)
 
         val mergedYaml = OpenApiMerger.mergeOpenApiYamls(generatedYamls, "Generated API", "1.0.0")
 
@@ -226,24 +240,152 @@ class Docutilians : CliktCommand() {
         }
     }
 
-    private fun scanProjectTargetDir(t: Terminal, projectTargetDir: Path): ScanResult {
+    private suspend fun scanProjectTargetDir(t: Terminal, projectTargetDir: Path): ScanResult {
         t.println(Colors.progress("⬤ Starting directory scan..."))
         val scanResult = CodeScanner(projectTargetDir.normalize().pathString).scan()
         t.println(Colors.info("  └─ Found ${scanResult.files.size} controller file(s)."))
 
+        // Update global config with detected language stats
+        if (scanResult.summary.byLanguage.isNotEmpty()) {
+            GlobalState.updateConfig { it.withScanResult(scanResult.summary.byLanguage) }
+            config = GlobalState.config
+
+            val primary = config.primaryDevLanguage
+            t.println(
+                Colors.info("  └─ Primary language: ") +
+                    Colors.accent(primary.displayName) +
+                    Colors.textMuted(" (${scanResult.summary.byLanguage})")
+            )
+
+            // Show detected frameworks
+            if (scanResult.summary.byFramework.isNotEmpty()) {
+                t.println(
+                    Colors.info("  └─ Frameworks: ") +
+                        Colors.textMuted(scanResult.summary.byFramework.entries.joinToString(", ") {
+                            "${it.key}(${it.value})"
+                        })
+                )
+            }
+        }
+
         return scanResult
+    }
+
+    /**
+     * Display detected files and allow user to add/remove files
+     */
+    private fun selectFilesToProcess(t: Terminal, detectedFiles: List<ScannedFile>): List<ScannedFile> {
+        val selectedFiles = detectedFiles.toMutableList()
+
+        while (true) {
+            // Show current file list
+            ScannedFileTable(t).render(selectedFiles, "DETECTED CONTROLLERS")
+
+            // Show options
+            t.println(Colors.Raw.textMuted("  ${"─".repeat(75)}"))
+            t.println("  ${Colors.Raw.primary("Commands:")}")
+            t.println("    ${Colors.Raw.accent("y")}        ${Colors.Raw.textMuted("─ Proceed with these files")}")
+            t.println("    ${Colors.Raw.accent("-N")}       ${Colors.Raw.textMuted("─ Remove file by number (e.g., -1, -3)")}")
+            t.println("    ${Colors.Raw.accent("+path")}    ${Colors.Raw.textMuted("─ Add file by path (e.g., +src/Controller.kt)")}")
+            t.println("    ${Colors.Raw.accent("q")}        ${Colors.Raw.textMuted("─ Quit")}")
+            t.println(Colors.Raw.textMuted("  ${"─".repeat(75)}"))
+
+            val input = InputPanel.prompt(
+                t,
+                InputPanelRequest(
+                    label = "Enter command",
+                    hint = "y to proceed, -N to remove, +path to add, q to quit",
+                )
+            )?.trim() ?: ""
+
+            when {
+                // Proceed
+                input.lowercase() == "y" || input.isEmpty() -> {
+                    return selectedFiles
+                }
+
+                // Quit
+                input.lowercase() == "q" -> {
+                    return emptyList()
+                }
+
+                // Remove file by number
+                input.startsWith("-") && input.length > 1 -> {
+                    val numbers = input.drop(1).split(",", " ").mapNotNull { it.trim().toIntOrNull() }
+                    if (numbers.isEmpty()) {
+                        t.println(Colors.error("Invalid format. Use -N (e.g., -1 or -1,2,3)"))
+                        continue
+                    }
+
+                    // Remove in reverse order to maintain indices
+                    numbers.sortedDescending().forEach { num ->
+                        val index = num - 1
+                        if (index in selectedFiles.indices) {
+                            val removed = selectedFiles.removeAt(index)
+                            t.println(Colors.warning("  ✗ Removed: ${removed.relativePath}"))
+                        } else {
+                            t.println(Colors.error("  Invalid number: $num"))
+                        }
+                    }
+                }
+
+                // Add file by path
+                input.startsWith("+") && input.length > 1 -> {
+                    val path = input.drop(1).trim()
+                    val file = config.projectDirPath.resolve(path).toFile()
+
+                    if (!file.exists()) {
+                        t.println(Colors.error("  File not found: $path"))
+                        continue
+                    }
+
+                    if (file.isDirectory) {
+                        t.println(Colors.error("  Cannot add directory: $path"))
+                        continue
+                    }
+
+                    // Check if already added
+                    if (selectedFiles.any { it.absolutePath == file.absolutePath }) {
+                        t.println(Colors.warning("  Already in list: $path"))
+                        continue
+                    }
+
+                    val content = try {
+                        file.readText()
+                    } catch (e: Exception) {
+                        t.println(Colors.error("  Cannot read file: ${e.message}"))
+                        continue
+                    }
+
+                    val newFile = ScannedFile(
+                        absolutePath = file.absolutePath,
+                        relativePath = path,
+                        content = content,
+                        language = file.extension,
+                        estimatedEndpoints = 0,
+                        framework = null,
+                    )
+                    selectedFiles.add(newFile)
+                    t.println(Colors.success("  ✓ Added: $path"))
+                }
+
+                else -> {
+                    t.println(Colors.error("Unknown command: $input"))
+                }
+            }
+        }
     }
 
     private suspend fun generateFileToOpenApiYaml(
         t: Terminal,
-        scanResult: ScanResult,
+        files: List<ScannedFile>,
     ): Pair<List<String>, ProgressAnimation> {
         val generatedYamls = mutableListOf<String>()
 
         val progress = ProgressAnimation(t, config)
-        progress.start(scanResult.files.size)
+        progress.start(files.size)
 
-        scanResult.files.forEach { scanFile ->
+        files.forEach { scanFile ->
             runCatching {
                     val file = Path.of(scanFile.absolutePath)
                     if (!file.exists() || file.isDirectory()) return@forEach
