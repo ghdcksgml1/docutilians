@@ -19,6 +19,10 @@ import java.time.format.DateTimeFormatter
 import kotlin.math.log10
 import kotlin.math.pow
 
+/**
+ * CHUCK_UI File Table
+ * Cyberpunk-styled data grid with neon accents
+ */
 class FileTable(private val terminal: Terminal) {
 
     private data class FileRenderItem(
@@ -35,7 +39,7 @@ class FileTable(private val terminal: Terminal) {
         terminal.println(
             table {
                 borderType = SQUARE_DOUBLE_SECTION_SEPARATOR
-                borderStyle = Colors.Raw.tableBorder
+                borderStyle = Colors.Raw.secondary  // Neon Pink border
                 tableBorders = Borders.TOP_BOTTOM
 
                 align = TextAlign.LEFT
@@ -45,12 +49,12 @@ class FileTable(private val terminal: Terminal) {
                 column(3) { padding = Padding(0, 2, 0, 2) }
 
                 header {
-                    style = Colors.tableHeaderText + Colors.Raw.tableHeaderBg.bg + TextStyles.bold
+                    style = Colors.textBlack + Colors.Raw.primary.bg + TextStyles.bold
                     row {
-                        cell("  NAME  ")
+                        cell("  ◈ NAME  ")
                         cell("EXT") { align = TextAlign.CENTER }
                         cell("SIZE") { align = TextAlign.RIGHT }
-                        cell("LAST MODIFIED") { align = TextAlign.RIGHT }
+                        cell("MODIFIED") { align = TextAlign.RIGHT }
                     }
                 }
 
@@ -61,37 +65,37 @@ class FileTable(private val terminal: Terminal) {
                         val (icon, colorStyle) = getStyleForExtension(item.extension, item.isDir)
 
                         row {
-                            // 1열: 파일명
+                            // Column 1: File name
                             cell(" $icon  ${item.name}") {
                                 style = colorStyle + TextStyles.bold
                                 if (item.isDir) style = style!! + TextStyles.underline
                             }
 
-                            // 2열: 확장자
+                            // Column 2: Extension
                             cell(item.extension.uppercase()) {
                                 align = TextAlign.CENTER
                                 style = colorStyle
                             }
 
-                            // 3열: 크기
+                            // Column 3: Size
                             cell(item.size) {
                                 align = TextAlign.RIGHT
                                 style = Colors.tableCellMuted
                             }
 
-                            // 4열: 날짜
+                            // Column 4: Date
                             cell(item.date) {
                                 align = TextAlign.RIGHT
-                                style = Colors.tableCellMuted + TextStyles.italic
+                                style = Colors.tableCellMuted
                             }
                         }
                     }
                 }
 
                 footer {
-                    style = Colors.tableFooter + TextStyles.bold
+                    style = Colors.Raw.primary + TextStyles.bold  // Neon Blue footer
                     row {
-                        cell("  TOTAL: ${items.size} FILES  ") {
+                        cell("  ▲ TOTAL: ${items.size} FILES  ") {
                             columnSpan = 4
                             align = TextAlign.RIGHT
                         }
@@ -102,53 +106,54 @@ class FileTable(private val terminal: Terminal) {
     }
 
     private fun getStyleForExtension(ext: String, isDir: Boolean): Pair<String, TextStyle> {
-        if (isDir) return "📂" to Colors.accent
+        // CHUCK_UI Cyberpunk color scheme for file types
+        if (isDir) return "▶" to Colors.Raw.primary  // Neon Blue for directories
 
         return when (ext) {
-            // JVM Ecosystem
-            "kt" -> "🦄" to TextColors.rgb("#7F52FF") // Kotlin Purple
-            "java" -> "☕" to TextColors.rgb("#ED8B00") // Java Orange
-            "gradle" -> "🐘" to TextColors.rgb("#02303A") // Gradle Dark
+            // JVM Ecosystem - Purple/Pink tones
+            "kt" -> "◆" to TextColors.rgb("#bc13fe")  // Kotlin - Neon Pink
+            "java" -> "◆" to TextColors.rgb("#ff6600")  // Java - Neon Orange
+            "gradle" -> "◇" to Colors.Raw.textMuted
 
-            // Web / Node
-            "js" -> "✨" to TextColors.rgb("#F7DF1E") // JS Yellow
-            "ts" -> "📘" to TextColors.rgb("#3178C6") // TS Blue
+            // Web / Node - Cyan/Yellow tones
+            "js" -> "◆" to TextColors.rgb("#fefe00")  // JS - Neon Yellow
+            "ts" -> "◆" to TextColors.rgb("#00f3ff")  // TS - Neon Blue
             "jsx",
-            "tsx" -> "⚛️" to TextColors.rgb("#61DAFB") // React Cyan
-            "html" -> "🌐" to TextColors.rgb("#E34F26") // HTML Orange
-            "css" -> "🎨" to TextColors.rgb("#1572B6") // CSS Blue
-            "vue" -> "🟩" to TextColors.rgb("#4FC08D") // Vue Green
+            "tsx" -> "◆" to TextColors.rgb("#00ccff")  // React - Cyan
+            "html" -> "◇" to TextColors.rgb("#ff5500")  // HTML - Orange
+            "css" -> "◇" to TextColors.rgb("#00f3ff")  // CSS - Neon Blue
+            "vue" -> "◆" to TextColors.rgb("#0aff0a")  // Vue - Neon Green
 
             // Backend / System
-            "rs" -> "🦀" to TextColors.rgb("#DEA584") // Rust
-            "go" -> "🐹" to TextColors.rgb("#00ADD8") // Go Cyan
-            "py" -> "🐍" to TextColors.rgb("#3776AB") // Python Blue
+            "rs" -> "◆" to TextColors.rgb("#ff6633")  // Rust - Orange
+            "go" -> "◆" to TextColors.rgb("#00f3ff")  // Go - Neon Cyan
+            "py" -> "◆" to TextColors.rgb("#fefe00")  // Python - Yellow
             "c",
             "cpp",
-            "h" -> "Ⓜ️" to TextColors.rgb("#A8B9CC") // C++ Metal
+            "h" -> "◇" to Colors.Raw.textMuted
 
-            // Config / Data
-            "json" -> "📦" to TextColors.rgb("#F0E68C") // Khaki
+            // Config / Data - Accent colors
+            "json" -> "◇" to TextColors.rgb("#fefe00")  // JSON - Yellow
             "yaml",
-            "yml" -> "⚙️" to Colors.Raw.secondary // Docutilians Cyan
-            "xml" -> "📑" to Colors.Raw.textMuted
-            "md" -> "📝" to Colors.Raw.textWhite
+            "yml" -> "◇" to Colors.Raw.primary  // YAML - Neon Blue (primary)
+            "xml" -> "◇" to Colors.Raw.textMuted
+            "md" -> "◇" to Colors.Raw.textWhite
 
-            // Graphics
+            // Graphics - Pink tones
             "png",
             "jpg",
             "jpeg",
             "svg",
-            "ico" -> "🖼️" to TextColors.rgb("#FF69B4")
+            "ico" -> "◇" to TextColors.rgb("#bc13fe")  // Neon Pink
 
-            // Archives
+            // Archives - Yellow/Gold
             "zip",
             "tar",
             "gz",
-            "7z" -> "🗜️" to TextColors.rgb("#FFD700")
+            "7z" -> "◇" to TextColors.rgb("#fefe00")
 
             // Default
-            else -> "📄" to Colors.Raw.textMuted
+            else -> "◇" to Colors.Raw.textMuted
         }
     }
 

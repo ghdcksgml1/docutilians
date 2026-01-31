@@ -13,12 +13,16 @@ enum class TruncateSide {
     RIGHT,
 }
 
+/**
+ * CHUCK_UI Text Panel
+ * Cyberpunk-styled text display with neon borders
+ */
 data class TextPanelRequest(
     val title: String? = null,
     val content: String,
-    val lineColor: TextStyle = Colors.Raw.primary,
-    val titleColor: TextStyle = Colors.Raw.secondary,
-    val contentColor: TextStyle = Colors.Raw.textWhite,
+    val lineColor: TextStyle = Colors.Raw.secondary,     // Neon Pink borders
+    val titleColor: TextStyle = Colors.Raw.primary,      // Neon Blue title
+    val contentColor: TextStyle = Colors.Raw.textWhite,  // Light content
     val width: Int = 77,
     val truncate: TruncateSide = TruncateSide.RIGHT,
     val ellipsis: String = "...",
@@ -27,30 +31,34 @@ data class TextPanelRequest(
 object TextPanel {
 
     fun of(request: TextPanelRequest): Widget {
-        val line = "═".repeat(request.width)
+        val topBorder = "═".repeat(request.width)
+        val bottomBorder = "═".repeat(request.width)
 
         val topLine =
             if (request.title != null) {
-                val titleWithIcon = "🧾 ${request.title}"
-                val padding = (request.width - titleWithIcon.length - 2) / 2
-                "═".repeat(padding) +
+                val titleWithIcon = "◈ ${request.title}"
+                val totalPadding = request.width - titleWithIcon.length - 2
+                val leftPad = totalPadding / 2
+                val rightPad = totalPadding - leftPad
+                "╔" + "═".repeat(leftPad) +
                     " " +
                     request.titleColor(titleWithIcon) +
                     " " +
-                    "═".repeat(padding)
+                    "═".repeat(rightPad) + "╗"
             } else {
-                line
+                "╔$topBorder╗"
             }
 
         val truncatedContent =
-            request.content.lines().joinToString("\n") {
-                truncateLine(it, request.width, request.truncate, request.ellipsis)
+            request.content.lines().joinToString("\n") { line ->
+                val truncated = truncateLine(line, request.width - 4, request.truncate, request.ellipsis)
+                "║ ${request.contentColor(truncated)}${" ".repeat(maxOf(0, request.width - truncated.length - 3))}║"
             }
 
         val output = buildString {
             appendLine(request.lineColor(topLine))
-            appendLine(request.contentColor(truncatedContent))
-            append(request.lineColor(line))
+            appendLine(truncatedContent)
+            append(request.lineColor("╚${bottomBorder}╝"))
         }
 
         return Text(output)

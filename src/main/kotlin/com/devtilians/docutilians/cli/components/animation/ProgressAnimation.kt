@@ -30,37 +30,78 @@ class ProgressAnimation(private val t: Terminal, private val config: Config) {
 
     private val animation: Animation<ProgressState> =
         t.textAnimation { state ->
-            val progress =
-                "[${"█".repeat(state.current)}${"░".repeat(state.total - state.current)}]"
+            // Cyberpunk neon progress bar
+            val filled = "▓".repeat(state.current)
+            val empty = "░".repeat(state.total - state.current)
+            val progress = "[$filled$empty]"
             val percent = if (state.total > 0) (state.current * 100 / state.total) else 0
 
             buildString {
-                appendLine(Colors.Raw.primary("─".repeat(60)))
-                appendLine("${Colors.Raw.secondary(state.spinner)} ${state.status}")
-                appendLine(
-                    "   ${Colors.Raw.textMuted("File:")} ${Colors.Raw.accent(state.fileName)}"
-                )
-                appendLine()
+                // Top border - Neon Pink glow
+                appendLine(Colors.Raw.secondary("╔${"═".repeat(58)}╗"))
 
-                // 로그 표시 영역
+                // Status line with spinner
+                appendLine(
+                    Colors.Raw.secondary("║") +
+                        " ${Colors.Raw.primary(state.spinner)} ${Colors.Raw.textWhite(state.status)}" +
+                        " ".repeat(maxOf(0, 56 - state.status.length)) +
+                        Colors.Raw.secondary("║")
+                )
+
+                // File info
+                val fileDisplay = truncatePath(state.fileName, 45)
+                appendLine(
+                    Colors.Raw.secondary("║") +
+                        "   ${Colors.Raw.textMuted("◈ TARGET:")} ${Colors.Raw.accent(fileDisplay)}" +
+                        " ".repeat(maxOf(0, 44 - fileDisplay.length)) +
+                        Colors.Raw.secondary("║")
+                )
+
+                appendLine(Colors.Raw.secondary("╠${"─".repeat(58)}╣"))
+
+                // Log display area
                 if (state.logs.isNotEmpty()) {
                     state.logs.forEach { log ->
-                        appendLine("   ${Colors.Raw.textMuted("→")} ${Colors.Raw.textMuted(log)}")
+                        val logDisplay = if (log.length > 52) log.take(49) + "..." else log
+                        appendLine(
+                            Colors.Raw.secondary("║") +
+                                "   ${Colors.Raw.textMuted("▸")} ${Colors.Raw.textMuted(logDisplay)}" +
+                                " ".repeat(maxOf(0, 53 - logDisplay.length)) +
+                                Colors.Raw.secondary("║")
+                        )
                     }
-                    appendLine()
+                    appendLine(Colors.Raw.secondary("╠${"─".repeat(58)}╣"))
                 }
 
+                // Progress bar - Neon Blue
+                val progressDisplay = "$progress $percent%"
                 appendLine(
-                    "   ${Colors.Raw.primary(progress)} ${percent}% (${state.current}/${state.total})"
+                    Colors.Raw.secondary("║") +
+                        "   ${Colors.Raw.primary(progress)} ${Colors.Raw.textWhite("$percent%")}" +
+                        " (${state.current}/${state.total})" +
+                        " ".repeat(maxOf(0, 35 - state.total.toString().length * 2)) +
+                        Colors.Raw.secondary("║")
                 )
-                appendLine()
+
+                appendLine(Colors.Raw.secondary("╠${"─".repeat(58)}╣"))
+
+                // Success/Fail counters
                 appendLine(
-                    "   ${Colors.Raw.success("✓ ${state.success}")}  ${Colors.Raw.error("✗ ${state.fail}")}"
+                    Colors.Raw.secondary("║") +
+                        "   ${Colors.Raw.success("▲ SUCCESS: ${state.success}")}" +
+                        "  ${Colors.Raw.error("▼ FAILED: ${state.fail}")}" +
+                        " ".repeat(maxOf(0, 30 - state.success.toString().length - state.fail.toString().length)) +
+                        Colors.Raw.secondary("║")
                 )
+
+                appendLine(Colors.Raw.secondary("╠${"─".repeat(58)}╣"))
+
+                // Token usage panel
+                append(formatTokenUsage(GlobalState.tokenUsage))
+
+                // Bottom border
                 appendLine()
-                append(formatTokenUsage(GlobalState.tokenUsage)) // GlobalState에서 직접 참조
-                appendLine()
-                append(Colors.Raw.primary("─".repeat(60)))
+                append(Colors.Raw.secondary("╚${"═".repeat(58)}╝"))
             }
         }
 
@@ -68,23 +109,38 @@ class ProgressAnimation(private val t: Terminal, private val config: Config) {
         val input = formatNumber(usage.inputTokens)
         val output = formatNumber(usage.outputTokens)
         val cached = formatNumber(usage.cachedTokens)
-        val cost = String.format("%.2f", usage.dollarCost)
-
-        val content = buildString {
-            append("[Input: $input] [Output: $output]")
-            if (usage.cachedTokens > 0) append(" [Cache: $cached]")
-            append(" [\$$cost]")
-        }
-
-        val width = maxOf(content.length + 4, 40)
-        val padding = width - content.length - 4
+        val cost = String.format("%.4f", usage.dollarCost)
 
         return buildString {
-            appendLine("   ${Colors.Raw.textMuted("┌─ Token Usage ─${"─".repeat(width - 17)}┐")}")
+            // Token Usage Header
             appendLine(
-                "   ${Colors.Raw.textMuted("│")} $content${" ".repeat(padding)} ${Colors.Raw.textMuted("│")}"
+                Colors.Raw.secondary("║") +
+                    "   ${Colors.Raw.primary("◆ TOKEN USAGE")}" +
+                    " ".repeat(43) +
+                    Colors.Raw.secondary("║")
             )
-            append("   ${Colors.Raw.textMuted("└${"─".repeat(width - 2)}┘")}")
+
+            // Input/Output tokens
+            val tokensLine = "${Colors.Raw.textMuted("IN:")} ${Colors.Raw.accent(input)}  " +
+                "${Colors.Raw.textMuted("OUT:")} ${Colors.Raw.accent(output)}"
+            appendLine(
+                Colors.Raw.secondary("║") +
+                    "     $tokensLine" +
+                    " ".repeat(maxOf(0, 35 - input.length - output.length)) +
+                    Colors.Raw.secondary("║")
+            )
+
+            // Cache + Cost
+            val cachePart = if (usage.cachedTokens > 0) {
+                "${Colors.Raw.textMuted("CACHE:")} ${Colors.Raw.success(cached)}  "
+            } else ""
+            val costLine = "$cachePart${Colors.Raw.textMuted("COST:")} ${Colors.Raw.warning("\$$cost")}"
+            append(
+                Colors.Raw.secondary("║") +
+                    "     $costLine" +
+                    " ".repeat(maxOf(0, 35 - cached.length - cost.length)) +
+                    Colors.Raw.secondary("║")
+            )
         }
     }
 
