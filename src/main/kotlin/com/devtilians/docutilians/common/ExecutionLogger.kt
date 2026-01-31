@@ -1,13 +1,16 @@
 package com.devtilians.docutilians.common
 
-import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import java.nio.file.Path
 import java.time.LocalDateTime
 
 /** execution_log.json 파일에 실행 로그를 추가하는 클래스 */
 class ExecutionLogger(private val logFile: Path) {
-    private val gson = Gson()
+    private val gson =
+        GsonBuilder()
+            .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeTypeAdapter())
+            .create()
 
     fun log(
         command: String,

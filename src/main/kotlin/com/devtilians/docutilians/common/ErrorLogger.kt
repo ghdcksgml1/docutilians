@@ -1,13 +1,16 @@
 package com.devtilians.docutilians.common
 
-import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import java.nio.file.Path
 import java.time.LocalDateTime
 
 /** error.json 파일에 에러 로그를 추가하는 클래스 */
 class ErrorLogger(private val errorLogFile: Path) {
-    private val gson = Gson()
+    private val gson =
+        GsonBuilder()
+            .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeTypeAdapter())
+            .create()
 
     fun logError(message: String, exception: Throwable? = null) {
         val entry =
